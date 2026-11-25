@@ -1,9 +1,9 @@
-# Nour-DE-Commerce — ERP commercial
+﻿# Nour-DE-Commerce — ERP commercial
 
 ERP web pour **Nour de Commerce** (distribution de produits alimentaires et d'hygiène) : produits, codes-barres Honeywell, stocks et lots, achats, ventes / POS, facturation, caisse, créances, finance, rapports.
 *Developed by GM LAC.*
 
-- **Production** : https://nour-de-commerce-erp.lakhalm300.workers.dev
+- **Production** : https://nour-de-commerce-erp.foot-arena-pro.workers.dev
 - **Hébergement** : Cloudflare Workers (API + interface) et Cloudflare D1 (base de données), en HTTPS
 - **Application installable** (PWA) sur Android, Windows et iOS ; interface en français et en arabe (RTL) ; mode clair ou sombre
 
