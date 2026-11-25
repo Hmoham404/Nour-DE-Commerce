@@ -1,4 +1,4 @@
-# Documentation technique
+﻿# Documentation technique
 
 ## Architecture
 ```
@@ -10,7 +10,7 @@ Cloudflare Worker « nour-de-commerce-erp » (Hono)
   └─ /*      → fichiers statiques (dist/), SPA
       │
       ▼
-Cloudflare D1 « nour-de-commerce-db » (SQLite managé, Time Travel 30 j)
+Cloudflare D1 « nour-de-commerce-db » (SQLite managé, Time Travel 7 j en gratuit / 30 j en payant)
 ```
 Choix Cloudflare (demande du client) à la place de Vercel + Supabase du cahier des charges : un seul fournisseur, une seule URL, aucune clé secrète exposée au navigateur (le Worker est le seul à accéder à la base ; il n'existe pas de « service role key »).
 

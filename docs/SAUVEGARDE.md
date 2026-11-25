@@ -1,7 +1,7 @@
-# Sauvegarde et restauration
+﻿# Sauvegarde et restauration
 
 ## 1. Automatique — Cloudflare D1 Time Travel
-La base garde l'historique des 30 derniers jours : restauration possible à la minute près.
+La base garde l'historique des **7 derniers jours** (offre gratuite) ou **30 jours** (offre Workers Paid) : restauration possible à la minute près. Au-delà, seuls les exports manuels (§2) permettent de revenir en arrière : d'où l'importance de l'export hebdomadaire.
 
 ```bash
 # voir le point de restauration actuel

@@ -1,4 +1,4 @@
-import { Download } from 'lucide-react';
+﻿import { Download } from 'lucide-react';
 import { useFetch } from '../lib/hooks';
 import { dt } from '../lib/format';
 import { Button, Card, PageHeader } from '../components/ui';
@@ -11,7 +11,7 @@ export default function Backups() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card title="1. Sauvegarde automatique (Cloudflare D1 Time Travel)">
           <p className="text-sm">
-            La base Cloudflare D1 conserve automatiquement l'historique de toutes les modifications : il est possible de la <b>restaurer à n'importe quelle minute des 30 derniers jours</b>, sans action de votre part.
+            La base Cloudflare D1 conserve automatiquement l'historique de toutes les modifications : il est possible de la <b>restaurer à n'importe quelle minute des 7 derniers jours</b> (offre gratuite Cloudflare ; 30 jours avec l'offre Workers Paid), sans action de votre part.
           </p>
           <p className="mt-2 text-xs text-muted">Procédure de restauration (administrateur technique) : voir docs/SAUVEGARDE.md — commande <code>wrangler d1 time-travel restore</code>.</p>
         </Card>
