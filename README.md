@@ -1,45 +1,56 @@
-# Nour-DE-Commerce
+# Nour-DE-Commerce — ERP commercial
 
-ERP commercial pour **Nour de Commerce** (produits alimentaires et d'hygiène). *Developed by GM LAC.*
+ERP web pour **Nour de Commerce** (distribution de produits alimentaires et d'hygiène) : produits, codes-barres Honeywell, stocks et lots, achats, ventes / POS, facturation, caisse, créances, finance, rapports.
+*Developed by GM LAC.*
 
-> Statut : **en développement**. Le backend (API + base de données) est fonctionnel et testé. L'interface web (React, PWA, FR/AR) est en cours de réalisation.
+- **Production** : https://nour-de-commerce-erp.lakhalm300.workers.dev
+- **Hébergement** : Cloudflare Workers (API + interface) et Cloudflare D1 (base de données), en HTTPS
+- **Application installable** (PWA) sur Android, Windows et iOS ; interface en français et en arabe (RTL) ; mode clair ou sombre
 
-## Architecture
+## Fonctionnalités
 
-| Couche | Technologie |
+| Domaine | Contenu |
 |---|---|
-| API | Cloudflare Workers + Hono (TypeScript) |
-| Base de données | Cloudflare D1 (SQLite) : migrations versionnées dans `migrations/` |
-| Interface | React + Vite + Tailwind (en cours), PWA, français / arabe (RTL) |
-| Scanner | Honeywell en mode USB HID Keyboard (aucun pilote), caméra en secours |
+| Catalogue | Fiches complètes, plusieurs codes-barres par produit (pièce, pack, carton), photos, 4 tarifs + prix par client, archivage ou suppression (si jamais utilisé), duplication, prix en masse avec historique, étiquettes |
+| Scanner Honeywell | USB HID sans pilote, suffixe Entrée/Tab/aucun, anti-doublon, bips, correction AZERTY, caméra du téléphone, Web Serial, page de test |
+| Stock | Mouvements tracés (avant/après), ajustements motivés, alertes, lots FEFO, péremptions, inventaire rapide par scan avec validation, faible rotation |
+| Achats | Commandes → réceptions partielles → factures fournisseur → règlements, coût moyen pondéré, frais d'approche, retours |
+| Ventes | POS (scan continu, attente/reprise, paiements multiples, différé, monnaie rendue, raccourcis), devis, commandes, factures, BL, avoirs, retours, remises par règles |
+| Caisse | Ouverture, décaissements, clôture avec écart justifié, validation, contre-opérations uniquement |
+| Finance | CA, encaissements, CMV, marge, taux de marge / de marque, dépenses, résultat estimé, créances, dettes |
+| Contrôle | Vérification des factures à distance (Moknine), journal d'audit immuable, historique des connexions |
+| Données | Import Excel/CSV en assistant, exports Excel/CSV/PDF configurables, sauvegardes |
 
-Principes :
-- Montants stockés en **millimes entiers** (1 TND = 1000), donc aucun calcul en virgule flottante.
-- Opérations critiques (vente, réception, retour, inventaire, caisse) exécutées dans **une seule transaction atomique**.
-- Ventes **idempotentes** : un double clic sur « Valider » ne crée pas deux ventes.
-- Stock négatif interdit par la base (trigger), FEFO sur les lots, coût moyen pondéré.
-- Journal d'audit et opérations de caisse **non modifiables** (triggers).
-- Permissions vérifiées côté serveur pour chaque route (rôles : Administrateur, Magasinier, Caissier, Contrôleur).
+## Documentation
+- [Guide utilisateur](docs/GUIDE-UTILISATEUR.md)
+- [Guide administrateur](docs/GUIDE-ADMINISTRATEUR.md)
+- [Branchement du scanner Honeywell et protocole de test](docs/SCANNER-HONEYWELL.md)
+- [Importation des produits](docs/IMPORT.md)
+- [Sauvegarde et restauration](docs/SAUVEGARDE.md)
+- [Documentation technique](docs/TECHNIQUE.md)
 
-## Démarrage local
-
+## Installation (développement)
 ```bash
 npm install
 npm run db:migrate:local
-node scripts/create-admin.mjs --email admin@exemple.tn --name "Propriétaire" --password "MotDePasse123"
-npm run dev:api          # API sur http://127.0.0.1:8799
-npm test                 # tests unitaires
-npm run test:api         # tests d'intégration (API lancée, admin admin@test.local / Test12345)
+node scripts/create-admin.mjs --email admin@test.local --name "Admin" --password "Test12345" --keep-password
+npm run build
+npm run dev:api        # http://127.0.0.1:8799
 ```
 
-## Structure
-
-```
-migrations/   schéma SQL + données de référence (rôles, numérotation, paramètres)
-shared/       logique partagée testée : montants, tarifs/remises, codes-barres, détection scanner, dates
-worker/       API (auth, produits, stock, achats, ventes, caisse, finance, rapports, import, sauvegarde)
-scripts/      création du premier administrateur
-tests/        tests unitaires (Vitest) et d'intégration (API réelle)
+## Tests
+```bash
+npm run typecheck      # TypeScript (interface + API) : 0 erreur
+npm test               # 20 tests unitaires : montants, tarifs, remises, codes-barres, simulation du scanner
+npm run test:api       # 31 tests d'intégration sur la vraie base : ventes atomiques, idempotence, concurrence, stock, crédit…
+npm run test:e2e       # 7 scénarios navigateur (Playwright) : connexion, scan HID, POS, arabe RTL, mobile, 36 pages
 ```
 
-Aucun identifiant, mot de passe ou clé n'est stocké dans ce dépôt.
+## Déploiement
+```bash
+npx wrangler login
+npm run db:migrate:remote
+npm run deploy
+node scripts/create-admin.mjs --email <email> --name "<nom>" --password "<provisoire>" --remote
+```
+Aucun identifiant, mot de passe ni clé n'est stocké dans ce dépôt.

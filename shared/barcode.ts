@@ -38,9 +38,22 @@ export function upcEtoUpcA(upce: string): string | null {
   return ns + body + check;
 }
 
+const AZERTY_DIGITS: Record<string, string> = { '&': '1', 'é': '2', '"': '3', "'": '4', '(': '5', '-': '6', 'è': '7', '_': '8', 'ç': '9', 'à': '0' };
+
+/**
+ * Lecteur configuré en clavier QWERTY/US sur un Windows AZERTY : la rangée des chiffres arrive
+ * sous forme « &é"'(-è_çà ». Si le code n'est composé QUE de ces caractères (et de chiffres),
+ * on le reconvertit en chiffres.
+ */
+export function fixAzertyDigits(code: string): string {
+  if (!/^[&é"'(\-è_çà0-9]+$/.test(code) || /^[0-9]+$/.test(code)) return code;
+  if (!/[&é"'(è_çà]/.test(code)) return code; // seulement des chiffres et des tirets : on ne touche pas
+  return code.replace(/[&é"'(\-è_çà]/g, (c) => AZERTY_DIGITS[c]);
+}
+
 export function sanitizeBarcode(raw: string): string {
   // supprime les caractères de contrôle (CR/LF/TAB, préfixes AIM éventuels non imprimables) — conserve les zéros initiaux
-  return raw.replace(/[\x00-\x1f\x7f]/g, '').trim();
+  return fixAzertyDigits(raw.replace(/[\x00-\x1f\x7f]/g, '').trim());
 }
 
 export function analyzeBarcode(raw: string): BarcodeInfo {

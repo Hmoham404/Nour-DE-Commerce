@@ -83,6 +83,11 @@ describe('Codes-barres', () => {
     expect(analyzeBarcode('0012345678905\r\n').code).toBe('0012345678905');
     expect(analyzeBarcode('ABC-123').format).toBe('CODE-128/39');
   });
+  it('corrige un lecteur en QWERTY sur un clavier AZERTY', () => {
+    expect(analyzeBarcode('à&é"\'(-è_çà&é').code).toBe('0123456789012');
+    expect(analyzeBarcode('ABC-123').code).toBe('ABC-123');
+    expect(analyzeBarcode('12-34').code).toBe('12-34');
+  });
   it('génère des EAN-13 internes valides', () => {
     const c = generateInternalEan13(42);
     expect(c).toHaveLength(13);

@@ -262,7 +262,7 @@ settings.put('/', async (c) => {
   need(c, 'settings.manage');
   const data = await body(c, z.record(z.string(), z.string().max(400000)));
   const db = c.env.DB;
-  const keys = Object.keys(data).filter((k) => SETTING_KEYS.includes(k));
+  const keys = Object.keys(data).filter((k) => SETTING_KEYS.includes(k) || /^export_profile_(products|customers|suppliers)$/.test(k));
   if (!keys.length) throw new HttpError(400, 'NO_KEYS', 'Aucun paramètre valide.');
   const old = await all<any>(db, `SELECT key, value FROM settings WHERE key IN (${keys.map(() => '?').join(',')})`, ...keys);
   await tx(db, [

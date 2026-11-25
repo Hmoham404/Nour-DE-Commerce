@@ -4,6 +4,7 @@ import {
   AppEnv, HttpError, all, first, tx, uuid, body, perm, can, need, auditStmt, requireAuth, pageParams, zMoney, zSignedMoney, zOptStr, seqReserve, seqExpr,
   dateRange, openSessionFor,
 } from '../lib';
+import { CUSTOMER_BALANCE_SQL } from './partners';
 
 // ───────────── Caisse ─────────────
 export const cash = new Hono<AppEnv>();
@@ -265,6 +266,30 @@ payments.post('/supplier', perm('payments.manage'), async (c) => {
   stmts.push(auditStmt(c, 'create', 'payments', pid, null, { ...d, allocated, advance: rest }));
   await tx(db, stmts);
   return c.json({ id: pid, allocated, advance: rest });
+});
+
+payments.get('/:id/detail', perm('payments.manage', 'finance.view', 'sales.view'), async (c) => {
+  const db = c.env.DB;
+  const p = await first<any>(
+    db,
+    `SELECT p.*, COALESCE(cu.name, s.name) AS party_name, COALESCE(cu.code, s.code) AS party_code, u.full_name AS created_by_name
+       FROM payments p LEFT JOIN customers cu ON p.party_type = 'customer' AND cu.id = p.party_id LEFT JOIN suppliers s ON p.party_type = 'supplier' AND s.id = p.party_id
+       LEFT JOIN users u ON u.id = p.created_by WHERE p.id = ?`,
+    c.req.param('id'),
+  );
+  if (!p) throw new HttpError(404, 'NOT_FOUND', 'Règlement introuvable.');
+  p.allocations = await all(
+    db,
+    `SELECT pa.amount, sa.number AS sale_number, i.number AS invoice_number, pi.number AS pinvoice_number
+       FROM payment_allocations pa LEFT JOIN sales sa ON sa.id = pa.sale_id LEFT JOIN invoices i ON i.sale_id = sa.id LEFT JOIN purchase_invoices pi ON pi.id = pa.purchase_invoice_id
+      WHERE pa.payment_id = ?`,
+    p.id,
+  );
+  if (p.party_type === 'customer' && p.party_id) {
+    const b = await first<any>(db, `SELECT ${CUSTOMER_BALANCE_SQL} AS balance FROM customers c WHERE c.id = ?`, p.party_id);
+    p.balance_after = b?.balance ?? null;
+  }
+  return c.json(p);
 });
 
 payments.get('/receivables', perm('customers.view', 'finance.view', 'payments.manage'), async (c) => {
