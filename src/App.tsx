@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+﻿import { lazy, Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth';
 import { I18nProvider } from './lib/i18n';
@@ -57,6 +57,9 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Backups = lazy(() => import('./pages/Backups'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Print = lazy(() => import('./pages/Print'));
+const Personnel = lazy(() => import('./pages/Personnel'));
+const Pointage = lazy(() => import('./pages/Pointage'));
+const Paie = lazy(() => import('./pages/Paie'));
 
 function Guard({ perm, children }: { perm: Permission[]; children: ReactNode }) {
   const { can } = useAuth();
@@ -141,6 +144,9 @@ function AppRoutes() {
           {R('/scanner', ['products.view', 'pos.use', 'stock.view'], <ScannerTestPage />)}
           {R('/parametres', ['settings.manage'], <Settings />)}
           {R('/sauvegardes', ['backup.manage'], <Backups />)}
+          {R('/personnel', ['hr.view', 'hr.manage', 'hr.attendance'], <Personnel />)}
+          {R('/pointage', ['hr.attendance', 'hr.view'], <Pointage />)}
+          {R('/paie', ['payroll.manage'], <Paie />)}
           <Route path="/profil" element={<Profile />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

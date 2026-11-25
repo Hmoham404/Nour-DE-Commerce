@@ -19,7 +19,9 @@ ERP web pour **Nour de Commerce** (distribution de produits alimentaires et d'hy
 | Caisse | Ouverture, décaissements, clôture avec écart justifié, validation, contre-opérations uniquement |
 | Finance | CA, encaissements, CMV, marge, taux de marge / de marque, dépenses, résultat estimé, créances, dettes |
 | Contrôle | Vérification des factures à distance (Moknine), journal d'audit immuable, historique des connexions |
-| Données | Import Excel/CSV en assistant, exports Excel/CSV/PDF configurables, sauvegardes |
+| Données | Import Excel/CSV en assistant, exports Excel/CSV/PDF configurables, sauvegardes, données d'exemple supprimables en un clic |
+| Personnel | Effectif, pointage journalier, avances, paie par semaine ou par mois (journalier / hebdomadaire / mensuel), état de paie et reçus de salaire |
+| Applications | PWA, **application Windows** (`desktop/`, installateur .exe, lecteurs série auto-connectés, impression directe), **APK Android** (TWA) — voir [docs/INSTALLATION-APPLICATIONS.md](docs/INSTALLATION-APPLICATIONS.md) |
 
 ## Documentation
 - [Guide utilisateur](docs/GUIDE-UTILISATEUR.md)
@@ -41,9 +43,9 @@ npm run dev:api        # http://127.0.0.1:8799
 ## Tests
 ```bash
 npm run typecheck      # TypeScript (interface + API) : 0 erreur
-npm test               # 20 tests unitaires : montants, tarifs, remises, codes-barres, simulation du scanner
-npm run test:api       # 31 tests d'intégration sur la vraie base : ventes atomiques, idempotence, concurrence, stock, crédit…
-npm run test:e2e       # 7 scénarios navigateur (Playwright) : connexion, scan HID, POS, arabe RTL, mobile, 36 pages
+npm test               # 25 tests unitaires (dont paie) : montants, tarifs, remises, codes-barres, simulation du scanner
+npm run test:api       # 33 tests d'intégration sur la vraie base : ventes atomiques, idempotence, concurrence, stock, crédit…
+npm run test:e2e       # 8 scénarios navigateur (Playwright) : connexion, scan HID, POS, arabe RTL, mobile, 36 pages
 ```
 
 ## Déploiement

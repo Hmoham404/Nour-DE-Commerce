@@ -1,0 +1,41 @@
+{
+  "name": "nour-de-commerce-desktop",
+  "productName": "Nour de Commerce",
+  "version": "1.0.0",
+  "description": "Nour de Commerce ERP — application de bureau Windows. Developed by GM LAC.",
+  "author": "GM LAC",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "tn.nourdecommerce.erp",
+    "productName": "Nour de Commerce",
+    "copyright": "© Nour de Commerce — Developed by GM LAC",
+    "directories": { "output": "release", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "offline.html", "build/icon.png", "build/logo.png"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.png",
+      "artifactName": "Nour-de-Commerce-Setup-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Nour de Commerce",
+      "installerLanguages": ["fr_FR"],
+      "language": "1036",
+      "runAfterFinish": true
+    }
+  }
+}

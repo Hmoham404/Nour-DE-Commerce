@@ -8,7 +8,7 @@ import { DataTable } from '../components/DataTable';
 import { EntitySelect } from '../components/common';
 import { Badge, Button, Card, Checkbox, Field, Input, Modal, MoneyInput, PageHeader, PercentInput, Select, Tabs, Textarea, useConfirm, useToast } from '../components/ui';
 
-type Tab = 'company' | 'tax' | 'numbering' | 'stock' | 'sales' | 'discounts' | 'places' | 'printing';
+type Tab = 'company' | 'tax' | 'numbering' | 'stock' | 'sales' | 'discounts' | 'places' | 'printing' | 'hr' | 'demo';
 
 export default function Settings() {
   const { settings, reloadSettings } = useAuth();
@@ -32,7 +32,7 @@ export default function Settings() {
     <div className="mx-auto max-w-5xl">
       <PageHeader title="Paramètres" subtitle="Les paramètres financiers et fiscaux doivent être validés par le propriétaire / son comptable avant l’utilisation réelle" />
       <Tabs
-        tabs={[['company', 'Entreprise'], ['tax', 'TVA et timbre'], ['numbering', 'Numérotation'], ['stock', 'Stock et alertes'], ['sales', 'Ventes'], ['discounts', 'Règles de remise'], ['places', 'Dépôts et caisses'], ['printing', 'Imprimantes']]}
+        tabs={[['company', 'Entreprise'], ['tax', 'TVA et timbre'], ['numbering', 'Numérotation'], ['stock', 'Stock et alertes'], ['sales', 'Ventes'], ['discounts', 'Règles de remise'], ['places', 'Dépôts et caisses'], ['printing', 'Imprimantes'], ['hr', 'Personnel'], ['demo', 'Données d’exemple']]}
         value={tab}
         onChange={setTab}
       />
@@ -97,6 +97,28 @@ export default function Settings() {
         </Card>
       )}
       {tab === 'discounts' && <DiscountRules />}
+      {tab === 'hr' && (
+        <Card title="Règles de paie" actions={<Button icon={<Save className="size-4" />} onClick={() => save(['hr_days_per_week', 'hr_days_per_month', 'hr_paid_leave_statuses'])}>Enregistrer</Button>}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Jours ouvrés par semaine" hint="Sert au calcul des absences (paie à la semaine)"><Input type="number" min={1} max={7} value={s.hr_days_per_week ?? '6'} onChange={(e) => set('hr_days_per_week', e.target.value)} /></Field>
+            <Field label="Jours ouvrés par mois" hint="Une absence = salaire mensuel ÷ ce nombre"><Input type="number" min={20} max={31} value={s.hr_days_per_month ?? '26'} onChange={(e) => set('hr_days_per_month', e.target.value)} /></Field>
+            {(() => {
+              let paid: string[] = [];
+              try { paid = JSON.parse(s.hr_paid_leave_statuses ?? '[]'); } catch { /* */ }
+              const toggle = (k: string, v: boolean) => set('hr_paid_leave_statuses', JSON.stringify(v ? [...new Set([...paid, k])] : paid.filter((x) => x !== k)));
+              return (
+                <div className="space-y-2 sm:col-span-2">
+                  <span className="text-xs font-semibold text-muted">Journées payées (en plus de « présent »)</span>
+                  <Checkbox checked={paid.includes('leave')} onChange={(v) => toggle('leave', v)} label="Congé payé" />
+                  <Checkbox checked={paid.includes('holiday')} onChange={(v) => toggle('holiday', v)} label="Jour férié" />
+                  <Checkbox checked={paid.includes('sick')} onChange={(v) => toggle('sick', v)} label="Maladie" />
+                </div>
+              );
+            })()}
+          </div>
+        </Card>
+      )}
+      {tab === 'demo' && <DemoData />}
       {tab === 'places' && <Places />}
       {tab === 'printing' && (
         <Card title="Imprimantes">
@@ -109,6 +131,50 @@ export default function Settings() {
         </Card>
       )}
     </div>
+  );
+}
+
+function DemoData() {
+  const { data, reload } = useFetch<any>('/api/demo');
+  const [busy, setBusy] = useState(false);
+  const toast = useToast();
+  const confirm = useConfirm();
+  const run = async (load: boolean) => {
+    if (!load && !(await confirm({ title: 'Supprimer les exemples', danger: true, message: 'Tous les enregistrements d’exemple seront supprimés. Vos données réelles ne sont pas touchées.' }))) return;
+    setBusy(true);
+    try {
+      if (load) {
+        const r = await api.post('/api/demo');
+        toast.success(`${r.records} exemples ajoutés : produits, clients, fournisseur, vente, devis, dépense, personnel et pointage`);
+      } else {
+        const r = await api.del('/api/demo');
+        toast.success(r.kept.length ? `Exemples supprimés. Conservés car réutilisés : ${r.kept.join(', ')}` : 'Exemples supprimés');
+      }
+      reload();
+    } catch (e: any) {
+      toast.error(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card title="Données d’exemple">
+      <p className="text-sm">
+        Pour découvrir le logiciel, chargez un jeu d’exemples dans chaque module : 2 catégories, 6 produits avec codes-barres (dont un en rupture et un avec date de péremption), 1 fournisseur, 2 clients,
+        1 règle de remise, 1 vente à crédit partiel, 1 devis, 1 dépense, 3 employés (payés au mois, à la journée et à la semaine) avec 6 jours de pointage et une avance.
+      </p>
+      <p className="mt-2 text-sm text-muted">Tous les exemples contiennent « exemple » dans leur nom. Ils se suppriment en un clic, sans toucher à vos données réelles.</p>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        {data?.loaded ? (
+          <>
+            <Badge color="gold">{`${Object.values(data.counts).reduce((a: number, b: any) => a + b, 0)} exemples chargés`}</Badge>
+            <Button variant="danger" loading={busy} icon={<Trash2 className="size-4" />} onClick={() => run(false)}>Supprimer tous les exemples</Button>
+          </>
+        ) : (
+          <Button variant="gold" loading={busy} icon={<Plus className="size-4" />} onClick={() => run(true)}>Ajouter les exemples</Button>
+        )}
+      </div>
+    </Card>
   );
 }
 

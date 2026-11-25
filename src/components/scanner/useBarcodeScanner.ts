@@ -38,6 +38,14 @@ export function useBarcodeScanner(onScan: (code: string) => void, enabled = true
     return () => window.removeEventListener('ndc:scanner-config', h);
   }, []);
 
+  // Lecteurs sur port série (RS232 / USB-COM) : les codes arrivent par un événement global
+  useEffect(() => {
+    if (!enabled) return;
+    const h = (e: Event) => cb.current((e as CustomEvent).detail);
+    window.addEventListener('ndc:serial-scan', h);
+    return () => window.removeEventListener('ndc:serial-scan', h);
+  }, [enabled]);
+
   useEffect(() => {
     if (!enabled) return;
     const config = getScannerConfig(settings.scanner_config);

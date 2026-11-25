@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { connectSerialPort, getBaud, isDesktopApp, onSerialStatus, reconnectAll, serialSupported, setBaud } from '../components/scanner/serial';
 import { AlertTriangle, CheckCircle2, Plug, Printer, ScanBarcode, Volume2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -51,8 +52,13 @@ export default function ScannerTestPage() {
   const [history, setHistory] = useState<ScanRecord[]>(getScanHistory());
   const [last, setLast] = useState<ScanRecord | null>(null);
   const [lookup, setLookup] = useState<any | null>(null);
-  const [serial, setSerial] = useState<string | null>(null);
-  const port = useRef<any>(null);
+  const [serial, setSerial] = useState<{ connected: number; baud: number; error?: string }>({ connected: 0, baud: getBaud() });
+  useEffect(() => {
+    const off = onSerialStatus(setSerial);
+    return () => {
+      off();
+    };
+  }, []);
 
   useEffect(() => {
     const h = (e: Event) => {
@@ -70,32 +76,11 @@ export default function ScannerTestPage() {
   };
 
   const connectSerial = async () => {
-    const nav: any = navigator;
-    if (!nav.serial) return toast.error('Web Serial non disponible (Chrome / Edge sur ordinateur, en HTTPS).');
     try {
-      const p = await nav.serial.requestPort();
-      await p.open({ baudRate: 9600 });
-      port.current = p;
-      setSerial('Connecté (9600 bauds)');
-      const reader = p.readable.pipeThrough(new TextDecoderStream()).getReader();
-      let buf = '';
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += value;
-        const parts = buf.split(/\r\n|\r|\n/);
-        buf = parts.pop() ?? '';
-        for (const part of parts) {
-          const code = analyzeBarcode(part).code;
-          if (code) {
-            pushScanHistory({ code, at: Date.now(), durationMs: 0, source: 'serial', format: analyzeBarcode(code).format });
-            beepOk(cfg.sound);
-          }
-        }
-      }
+      await connectSerialPort();
+      toast.success('Lecteur série connecté : il sera reconnecté automatiquement au prochain démarrage.');
     } catch (e: any) {
-      setSerial(null);
-      if (e?.name !== 'NotFoundError') toast.error('Connexion série impossible : ' + e.message);
+      if (e?.name !== 'NotFoundError') toast.error(e.message);
     }
   };
 
@@ -162,8 +147,19 @@ export default function ScannerTestPage() {
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2"><ScanBarcode className="size-5 text-gold" /> Mode : <b>USB HID Keyboard</b></div>
               <p className="text-xs text-muted">En mode clavier, le navigateur ne permet pas de détecter physiquement le branchement du lecteur : l'état « prêt » signifie que l'application écoute les lectures. Seule une lecture réussie confirme le fonctionnement.</p>
-              <div className="flex items-center gap-2"><Plug className="size-5" /> Port série : {serial ?? <span className="text-muted">non connecté</span>}</div>
-              <Button size="sm" variant="outline" onClick={connectSerial}>Connecter un lecteur série (Web Serial)</Button>
+              {isDesktopApp() && <div className="rounded-lg bg-green-50 p-2 text-xs text-green-800 dark:bg-green-950/40 dark:text-green-300">✓ Application de bureau : les lecteurs série / RS232 Honeywell sont sélectionnés automatiquement.</div>}
+              <div className="flex items-center gap-2">
+                <Plug className="size-5" /> Lecteur série (RS232 / USB-COM) :{' '}
+                {serial.connected ? <b className="text-green-600">connecté ({serial.baud} bauds)</b> : <span className="text-muted">non connecté</span>}
+              </div>
+              {serial.error && <p className="text-xs text-red-600">{serial.error}</p>}
+              <div className="flex items-center gap-2">
+                <Select className="h-8 w-32" value={serial.baud} onChange={async (e) => { setBaud(Number(e.target.value)); await reconnectAll(); }}>
+                  {[9600, 19200, 38400, 57600, 115200].map((b) => <option key={b} value={b}>{b} bauds</option>)}
+                </Select>
+                <Button size="sm" variant="outline" disabled={!serialSupported()} onClick={connectSerial}>Connecter un lecteur série</Button>
+              </div>
+              {!serialSupported() && <p className="text-xs text-muted">Port série indisponible dans ce navigateur : installez l'application de bureau Nour de Commerce (Windows) ou utilisez Chrome / Edge.</p>}
             </div>
           </Card>
           <Card title="Réglages (ce poste)">

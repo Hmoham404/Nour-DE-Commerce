@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-  AlertTriangle, ArrowLeftRight, BadgePercent, Banknote, BarChart3, Bell, Boxes, Building2, CalendarClock, ChevronDown, ClipboardCheck, ClipboardList,
+  AlertTriangle, ArrowLeftRight, BadgePercent, Banknote, BarChart3, Bell, Boxes, Building2, CalendarCheck, CalendarClock, ChevronDown, ClipboardCheck, ClipboardList,
   CreditCard, Database, FileCheck2, FileSpreadsheet, FileText, FolderTree, HandCoins, History, Home, KeyRound, LayoutDashboard, LogOut, Menu, Moon,
   Package, PackageCheck, PackageMinus, PanelLeftClose, PanelLeftOpen, Receipt, RotateCcw, ScanBarcode, Search, Settings, ShieldCheck, ShoppingCart,
   Store, Sun, Truck, Undo2, Upload, User, Users, Wallet, WifiOff, X, type LucideIcon,
@@ -13,6 +13,7 @@ import { useDebounce, useOnline } from '../lib/hooks';
 import { dt } from '../lib/format';
 import type { Permission } from '../../shared/permissions';
 import { FlagFR, FlagTN } from './Flags';
+import { startSerialBridge } from './scanner/serial';
 import { cx } from './ui';
 
 interface Item {
@@ -82,6 +83,14 @@ export const MENU: Group[] = [
     ],
   },
   {
+    label: 'Personnel',
+    items: [
+      { to: '/personnel', label: 'Effectif', icon: Users, perm: ['hr.view', 'hr.manage'] },
+      { to: '/pointage', label: 'Pointage', icon: CalendarCheck, perm: ['hr.attendance'] },
+      { to: '/paie', label: 'Paie', icon: HandCoins, perm: ['payroll.manage'] },
+    ],
+  },
+  {
     label: 'Rapports',
     items: [
       { to: '/rapports', label: 'Statistiques', icon: BarChart3, perm: ['reports.view'] },
@@ -117,6 +126,9 @@ export const SIMPLE_MENU: Item[] = [
   { to: '/fournisseurs', label: 'Fournisseurs', icon: Building2, perm: ['suppliers.view'] },
   { to: '/caisse', label: 'Ma caisse', icon: Wallet, perm: ['cash.use', 'cash.manage'] },
   { to: '/depenses', label: 'Dépenses', icon: Banknote, perm: ['expenses.manage'] },
+  { to: '/personnel', label: 'Personnel', icon: Users, perm: ['hr.view', 'hr.manage'] },
+  { to: '/pointage', label: 'Pointage', icon: CalendarCheck, perm: ['hr.attendance'] },
+  { to: '/paie', label: 'Paie', icon: HandCoins, perm: ['payroll.manage'] },
   { to: '/verification', label: 'Vérification des factures', icon: ShieldCheck, perm: ['invoices.verify'] },
   { to: '/rapports', label: 'Rapports', icon: BarChart3, perm: ['reports.view'] },
   { to: '/parametres', label: 'Paramètres', icon: Settings, perm: ['settings.manage'] },
@@ -132,14 +144,16 @@ function NavItem({ i, collapsed, onNavigate, big }: { i: Item; collapsed: boolea
       title={collapsed ? t(i.label) : undefined}
       className={({ isActive }) =>
         cx(
-          'mx-2 flex items-center gap-3 rounded-lg px-3 transition',
+          'group relative mx-2 flex items-center gap-3 rounded-xl px-3 transition-all duration-150',
           big ? 'py-2.5 text-[15px]' : 'py-2 text-sm',
-          isActive ? 'bg-gold font-semibold text-navy' : 'text-white/85 hover:bg-white/10',
+          isActive
+            ? 'bg-linear-to-r from-[#e8bd5a] to-gold font-semibold text-navy shadow-lg shadow-black/20'
+            : 'text-white/80 hover:translate-x-0.5 hover:bg-white/[.08] hover:text-white rtl:hover:-translate-x-0.5',
           collapsed && 'justify-center px-0',
         )
       }
     >
-      <i.icon className={big ? 'size-5 shrink-0' : 'size-[18px] shrink-0'} />
+      <i.icon className={cx(big ? 'size-5 shrink-0' : 'size-[18px] shrink-0', 'transition group-[.active]:text-navy')} />
       {!collapsed && <span className="truncate">{t(i.label)}</span>}
     </NavLink>
   );
@@ -151,8 +165,8 @@ function Sidebar({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
   const [full, setFull] = useState(() => localStorage.getItem('ndc-full-menu') === '1');
   useEffect(() => localStorage.setItem('ndc-full-menu', full ? '1' : '0'), [full]);
   return (
-    <nav className="flex h-full flex-col bg-navy text-white">
-      <div className={cx('flex items-center justify-center bg-white', collapsed ? 'h-16 p-2' : 'h-20 px-4 py-3')}>
+    <nav className="flex h-full flex-col bg-linear-to-b from-[#0e2a5c] via-navy to-[#071735] text-white">
+      <div className={cx('flex items-center justify-center border-b-4 border-gold bg-white', collapsed ? 'h-16 p-2' : 'h-20 px-4 py-3')}>
         {collapsed ? <img src="/icons/icon-192.png" alt="Nour de Commerce" className="size-10 rounded" /> : <img src="/logo-sm.png" alt="Nour de Commerce" className="max-h-14 w-auto" />}
       </div>
       <div className="flex-1 overflow-y-auto py-2">
@@ -291,7 +305,7 @@ function ProfileMenu() {
   return (
     <div className="relative">
       <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-surface-2">
-        <span className="flex size-8 items-center justify-center rounded-full bg-gold font-bold text-navy">{me?.full_name?.[0]?.toUpperCase()}</span>
+        <span className="flex size-9 items-center justify-center rounded-full bg-linear-to-br from-[#f0cd7a] to-gold font-bold text-navy shadow-md shadow-gold/30 ring-2 ring-white dark:ring-navy">{me?.full_name?.[0]?.toUpperCase()}</span>
         <span className="hidden text-start text-xs leading-tight lg:block">
           <b className="block text-sm">{me?.full_name}</b>
           <span className="text-muted">{me?.role}</span>
@@ -353,6 +367,9 @@ export function Layout({ children }: { children?: ReactNode }) {
   const main = useRef<HTMLElement>(null);
   useEffect(() => localStorage.setItem('ndc-collapsed', collapsed ? '1' : '0'), [collapsed]);
   useEffect(() => {
+    startSerialBridge();
+  }, []);
+  useEffect(() => {
     setMobile(false);
     main.current?.scrollTo(0, 0);
   }, [loc.pathname]);
@@ -376,7 +393,7 @@ export function Layout({ children }: { children?: ReactNode }) {
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="no-print flex h-16 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 sm:px-4">
+        <header className="no-print relative z-10 flex h-16 shrink-0 items-center gap-2 border-b border-line/70 bg-surface/90 px-2 shadow-[0_1px_8px_rgba(11,33,73,.06)] backdrop-blur sm:px-4">
           <button className="rounded-lg p-2 hover:bg-surface-2 md:hidden" onClick={() => setMobile(true)} aria-label="Menu">
             <Menu className="size-5" />
           </button>

@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useCallback, useContext, useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+﻿import { createContext, forwardRef, useCallback, useContext, useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { AlertTriangle, CheckCircle2, Info, Loader2, X, XCircle } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
 import { parseMoney, toInputMoney } from '../lib/format';
@@ -8,12 +8,13 @@ export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Bool
 // ───────────── Boutons ─────────────
 type Variant = 'primary' | 'gold' | 'outline' | 'ghost' | 'danger' | 'success';
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-navy text-white hover:bg-navy-700 dark:bg-gold dark:text-navy dark:hover:bg-gold-600',
-  gold: 'bg-gold text-navy hover:bg-gold-600',
-  outline: 'border border-line bg-surface hover:bg-surface-2 text-fg',
-  ghost: 'hover:bg-surface-2 text-fg',
-  danger: 'bg-red-600 text-white hover:bg-red-700',
-  success: 'bg-green-600 text-white hover:bg-green-700',
+  primary:
+    'bg-linear-to-b from-[#173a7a] to-navy text-white shadow-md shadow-navy/25 hover:shadow-lg hover:shadow-navy/30 hover:brightness-110 dark:from-[#e8bd5a] dark:to-gold dark:text-navy dark:shadow-gold/20',
+  gold: 'bg-linear-to-b from-[#e8bd5a] to-gold text-navy shadow-md shadow-gold/30 hover:shadow-lg hover:shadow-gold/40 hover:brightness-105',
+  outline: 'border border-line bg-surface text-fg shadow-sm hover:border-navy/30 hover:bg-surface-2 dark:hover:border-gold/40',
+  ghost: 'text-fg hover:bg-navy/5 dark:hover:bg-white/5',
+  danger: 'bg-linear-to-b from-red-500 to-red-600 text-white shadow-md shadow-red-600/25 hover:brightness-110',
+  success: 'bg-linear-to-b from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-600/25 hover:brightness-110',
 };
 export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: 'sm' | 'md' | 'lg'; loading?: boolean; icon?: ReactNode }>(
   ({ variant = 'primary', size = 'md', loading, icon, className, children, disabled, ...p }, ref) => (
@@ -21,8 +22,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLBut
       ref={ref}
       disabled={disabled || loading}
       className={cx(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap',
-        size === 'sm' ? 'h-8 px-3 text-sm' : size === 'lg' ? 'h-12 px-5 text-base' : 'h-10 px-4 text-sm',
+        'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-150 active:scale-[.97] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none whitespace-nowrap focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold/40',
+        size === 'sm' ? 'h-8 rounded-lg px-3 text-sm' : size === 'lg' ? 'h-12 px-6 text-base' : 'h-10 px-4 text-sm',
         VARIANTS[variant],
         className,
       )}
@@ -35,7 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLBut
 );
 
 // ───────────── Champs ─────────────
-const inputCls = 'h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-gold/30 disabled:opacity-60';
+const inputCls = 'h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm shadow-xs outline-none transition placeholder:text-muted/70 hover:border-navy/30 focus:border-gold focus:ring-4 focus:ring-gold/20 disabled:bg-surface-2 disabled:opacity-70 dark:hover:border-gold/40';
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ className, ...p }, ref) => <input ref={ref} className={cx(inputCls, className)} {...p} />);
 export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(({ className, children, ...p }, ref) => (
   <select ref={ref} className={cx(inputCls, 'pe-8', className)} {...p}>
@@ -124,14 +125,14 @@ export function Checkbox({ checked, onChange, label }: { checked: boolean; onCha
 // ───────────── Présentation ─────────────
 export function Card({ title, actions, children, className, padded = true }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; padded?: boolean }) {
   return (
-    <section className={cx('rounded-xl border border-line bg-surface shadow-sm', className)}>
+    <section className={cx('rounded-2xl border border-line/70 bg-surface shadow-[0_1px_3px_rgba(11,33,73,.06),0_8px_24px_-12px_rgba(11,33,73,.12)]', className)}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
-          <h3 className="font-semibold">{title}</h3>
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line/70 px-5 py-3.5">
+          <h3 className="flex items-center gap-2 font-semibold text-navy dark:text-white"><span className="h-4 w-1 rounded-full bg-gold" />{title}</h3>
           <div className="flex flex-wrap gap-2">{actions}</div>
         </header>
       )}
-      <div className={padded ? 'p-4' : ''}>{children}</div>
+      <div className={padded ? 'p-5' : ''}>{children}</div>
     </section>
   );
 }
@@ -154,7 +155,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   return (
     <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-xl font-bold text-navy dark:text-white sm:text-2xl">{t(title)}</h1>
+        <h1 className="text-xl font-extrabold tracking-tight text-navy dark:text-white sm:text-2xl">{t(title)}</h1>
         {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">{actions}</div>
@@ -202,8 +203,8 @@ export function Stat({ label, value, sub, icon, tone = 'navy', onClick }: { labe
     amber: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   };
   return (
-    <div onClick={onClick} className={cx('flex items-start gap-3 rounded-xl border border-line bg-surface p-4 shadow-sm', onClick && 'cursor-pointer hover:border-gold')}>
-      {icon && <div className={cx('rounded-lg p-2', tones[tone])}>{icon}</div>}
+    <div onClick={onClick} className={cx('flex items-start gap-3 rounded-2xl border border-line/70 bg-surface p-4 shadow-[0_1px_3px_rgba(11,33,73,.06)] transition', onClick && 'cursor-pointer hover:-translate-y-0.5 hover:border-gold/60 hover:shadow-lg hover:shadow-navy/5')}>
+      {icon && <div className={cx('rounded-xl p-2.5', tones[tone])}>{icon}</div>}
       <div className="min-w-0">
         <div className="text-xs font-medium text-muted">{t(label)}</div>
         <div className="num mt-0.5 truncate text-lg font-bold">{value}</div>
@@ -242,8 +243,8 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: {
   const w = { sm: 'max-w-md', md: 'max-w-xl', lg: 'max-w-3xl', xl: 'max-w-5xl' }[size];
   return (
     <div role="dialog" aria-modal="true" className="ndc-modal fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={cx('flex max-h-[95vh] w-full flex-col rounded-t-2xl bg-surface shadow-2xl sm:rounded-2xl', w)}>
-        <div className="flex items-center justify-between border-b border-line px-5 py-3">
+      <div className={cx('flex max-h-[95vh] w-full flex-col overflow-hidden rounded-t-3xl bg-surface shadow-2xl ring-1 ring-black/5 sm:rounded-3xl', w)}>
+        <div className="flex items-center justify-between border-b border-line bg-linear-to-r from-navy/[.04] to-gold/[.06] px-5 py-3.5">
           <h2 className="text-lg font-semibold">{title}</h2>
           <button onClick={onClose} className="rounded-lg p-1 hover:bg-surface-2" aria-label="Fermer">
             <X className="size-5" />

@@ -342,6 +342,48 @@ await test('journal d’audit alimenté', async () => {
   assert.ok(!JSON.stringify(a.rows).includes('Caisse123'), 'aucun mot de passe dans le journal');
 });
 
+await test('personnel : employés, pointage, paie mensuelle et journalière, avance', async () => {
+  const m = (await admin.ok('POST', '/api/hr/employees', { full_name: 'Employé Mensuel ' + RUN, pay_type: 'monthly', monthly_salary: 780000 })).id;
+  const dly = (await admin.ok('POST', '/api/hr/employees', { full_name: 'Employé Journalier ' + RUN, pay_type: 'daily', daily_rate: 30000, overtime_hourly_rate: 6000 })).id;
+  await admin.ok('POST', '/api/hr/advances', { employee_id: dly, advance_date: '2031-03-03', amount: 10000 });
+  const days = ['2031-03-03', '2031-03-04', '2031-03-05'];
+  const st = { m: ['present', 'absent', 'present'], d: ['present', 'half', 'present'] };
+  for (const [i, date] of days.entries()) {
+    await admin.ok('PUT', '/api/hr/attendance', { date, entries: [{ employee_id: m, status: st.m[i] }, { employee_id: dly, status: st.d[i], overtime_minutes: i === 0 ? 60 : 0 }] });
+  }
+  const pv = await admin.ok('POST', '/api/hr/payroll/preview', { period_type: 'month', period_start: '2031-03-01', period_end: '2031-03-31' });
+  const pm = pv.items.find((x) => x.employee_id === m);
+  const pd = pv.items.find((x) => x.employee_id === dly);
+  assert.equal(pm.base_amount, 750000); // 780 − 1 absence (780/26)
+  assert.equal(pd.base_amount, 75000); // 2,5 jours × 30
+  assert.equal(pd.overtime_amount, 6000);
+  assert.equal(pd.net_amount, 75000 + 6000 - 10000);
+  const run = (await admin.ok('POST', '/api/hr/payroll', { period_type: 'month', period_start: '2031-03-01', period_end: '2031-03-31', overrides: { [m]: { bonus: 20000 } } })).id;
+  const overlap = await admin.post('/api/hr/payroll', { period_type: 'week', period_start: '2031-03-02', period_end: '2031-03-08' });
+  assert.equal(overlap.status, 409);
+  await admin.ok('POST', `/api/hr/payroll/${run}/validate`);
+  const r = await admin.put('/api/hr/attendance', { date: '2031-03-03', entries: [{ employee_id: m, status: 'absent' }] });
+  assert.equal(r.body.skipped, 1, 'journée payée verrouillée');
+  await admin.ok('POST', `/api/hr/payroll/${run}/pay`, { from_cash: false });
+  const detail = await admin.ok('GET', `/api/hr/payroll/${run}`);
+  assert.equal(detail.status, 'paid');
+  assert.ok(detail.expense_id);
+  assert.equal((await admin.del(`/api/hr/employees/${m}`)).status, 409, 'employé payé non supprimable');
+});
+
+await test('données d’exemple : ajout puis suppression en un clic', async () => {
+  const before = await admin.ok('GET', '/api/demo');
+  if (before.loaded) await admin.ok('DELETE', '/api/demo');
+  const load = await admin.ok('POST', '/api/demo');
+  assert.ok(load.records >= 20);
+  const p = await admin.ok('GET', '/api/products?q=(exemple)');
+  assert.equal(p.total, 6);
+  const del = await admin.ok('DELETE', '/api/demo');
+  assert.equal(del.remaining, 0, JSON.stringify(del.kept));
+  assert.equal((await admin.ok('GET', '/api/products?q=(exemple)&status=all')).total, 0);
+  assert.equal((await admin.ok('GET', '/api/hr/employees?status=all')).filter((e) => e.full_name.startsWith('Exemple')).length, 0);
+});
+
 await test('déconnexion', async () => {
   await admin.ok('POST', '/api/auth/logout');
   assert.equal((await admin.get('/api/me')).status, 401);

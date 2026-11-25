@@ -10,6 +10,8 @@ import { sales, invoices, quotes } from './routes/sales';
 import { cash, payments, expenses } from './routes/finance';
 import { dashboard, reports, notifications, audit, search, refreshNotifications } from './routes/reports';
 import { importer, backup } from './routes/data';
+import { hr } from './routes/hr';
+import { demo } from './routes/demo';
 
 const app = new Hono<AppEnv>();
 
@@ -63,6 +65,8 @@ app.route('/api/audit', audit);
 app.route('/api/search', search);
 app.route('/api/import', importer);
 app.route('/api/backup', backup);
+app.route('/api/hr', hr);
+app.route('/api/demo', demo);
 
 app.all('/api/*', (c) => c.json({ error: 'NOT_FOUND', message: 'Ressource introuvable.' }, 404));
 

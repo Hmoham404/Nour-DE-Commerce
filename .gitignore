@@ -8,3 +8,9 @@ dist/
 *.log
 backups/
 test-results/
+
+desktop/node_modules/
+desktop/release/
+
+*.keystore
+signing-key-info*.txt

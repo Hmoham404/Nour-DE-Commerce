@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Lock, Mail } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -30,8 +30,10 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col bg-gradient-to-br from-navy via-navy-700 to-navy">
-      <div className="flex justify-end gap-2 p-3 text-white">
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-linear-to-br from-[#071735] via-navy to-[#14306a]">
+      <div className="pointer-events-none absolute -end-40 -top-40 size-[520px] rounded-full bg-gold/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-48 -start-40 size-[480px] rounded-full bg-[#2a5bb8]/30 blur-3xl" />
+      <div className="relative flex justify-end gap-2 p-3 text-white">
         <div className="rounded-lg bg-white text-navy">
           <LangToggle />
         </div>
@@ -39,8 +41,9 @@ export default function Login() {
           <ThemeToggle />
         </div>
       </div>
-      <div className="flex flex-1 items-center justify-center p-4">
-        <form onSubmit={submit} className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-2xl sm:p-8">
+      <div className="relative flex flex-1 items-center justify-center p-4">
+        <form onSubmit={submit} className="relative w-full max-w-md overflow-hidden rounded-3xl bg-surface p-6 shadow-2xl shadow-black/40 ring-1 ring-white/10 sm:p-9">
+          <div className="absolute inset-x-0 top-0 h-1.5 bg-linear-to-r from-gold via-[#f0cd7a] to-gold" />
           <img src="/logo-sm.png" alt="Nour de Commerce" className="mx-auto mb-2 w-64 max-w-full rounded-lg bg-white p-2" />
           <h1 className="mb-6 text-center text-lg font-semibold text-muted">{t('Connexion')} — ERP</h1>
           <div className="space-y-4">
@@ -66,7 +69,7 @@ export default function Login() {
           </div>
         </form>
       </div>
-      <p className="pb-4 text-center text-xs text-white/60">
+      <p className="relative pb-4 text-center text-xs text-white/60">
         © Nour de Commerce · Developed by <b className="text-gold">GM LAC</b>
       </p>
       <Modal open={forgot} onClose={() => setForgot(false)} title={t('Mot de passe oublié ?')} size="sm">

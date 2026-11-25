@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+﻿import { useEffect, useRef, useState, type ReactNode } from 'react';
 import JsBarcode from 'jsbarcode';
 import { TEST_CODES } from './ScannerTestPage';
 import { useParams } from 'react-router-dom';
@@ -8,6 +8,9 @@ import { useAuth } from '../lib/auth';
 import { dt, money, pct, PAY_METHODS, CUSTOMER_TYPES, MOVE_TYPES } from '../lib/format';
 import { amountInWords } from '../../shared/words';
 import { Button, ErrorBox, Spinner } from '../components/ui';
+
+/** Application de bureau : impression (directe si activée) ; navigateur : boîte d'impression standard. */
+const printDoc = () => ((window as any).ndcDesktop?.print ? (window as any).ndcDesktop.print() : window.print());
 
 /** Page d'impression : A4 (factures, bons, relevés…) ou ticket thermique 80 mm. Enregistrable en PDF via le navigateur. */
 export default function Print() {
@@ -31,6 +34,7 @@ export default function Print() {
         case 'caisse': return api.get(`/api/cash/sessions/${id}`);
         case 'inventaire': return api.get(`/api/inventories/${id}`);
         case 'test-scanner': return { number: 'test' };
+        case 'paie': return api.get(`/api/hr/payroll/${id}`);
         default: throw new Error('Type de document inconnu');
       }
     };
@@ -41,7 +45,7 @@ export default function Print() {
     if (!data) return;
     document.title = `${type}-${data.number ?? data.party?.code ?? id}`;
     if (type === 'ticket') document.body.classList.add('print-ticket');
-    const t = setTimeout(() => window.print(), 500);
+    const t = setTimeout(printDoc, 500);
     return () => clearTimeout(t);
   }, [data, type, id]);
 
@@ -50,7 +54,7 @@ export default function Print() {
 
   const toolbar = (
     <div className="no-print sticky top-0 z-10 flex justify-center gap-2 border-b bg-white p-2">
-      <Button icon={<Printer className="size-4" />} onClick={() => window.print()}>Imprimer / Enregistrer en PDF</Button>
+      <Button icon={<Printer className="size-4" />} onClick={printDoc}>Imprimer / Enregistrer en PDF</Button>
       <Button variant="outline" icon={<X className="size-4" />} onClick={() => window.close()}>Fermer</Button>
     </div>
   );
@@ -156,6 +160,43 @@ function TestBarcode({ code, format }: { code: string; format: string }) {
 }
 
 function Doc({ type, d, settings }: { type: string; d: any; settings: Record<string, string> }) {
+  if (type === 'paie') {
+    const period = `${d.period_type === 'week' ? 'Semaine' : 'Mois'} du ${dt(d.period_start)} au ${dt(d.period_end)}`;
+    return (
+      <div>
+        <Header settings={settings} title="État de paie" number={d.number} date={period} />
+        <table className="mt-4 w-full border-collapse">
+          <thead><tr><th className={th}>Employé</th><th className={th + ' text-right'}>Présents</th><th className={th + ' text-right'}>Absences</th><th className={th + ' text-right'}>Salaire</th><th className={th + ' text-right'}>H. sup.</th><th className={th + ' text-right'}>Prime</th><th className={th + ' text-right'}>Avances</th><th className={th + ' text-right'}>Retenues</th><th className={th + ' text-right'}>Net</th><th className={th}>Signature</th></tr></thead>
+          <tbody>
+            {d.items.map((i: any) => (
+              <tr key={i.id}><td className={td}>{i.full_name}</td><td className={tdn}>{i.days_present}</td><td className={tdn}>{i.days_absent}</td><td className={tdn}>{money(i.base_amount, false)}</td><td className={tdn}>{money(i.overtime_amount, false)}</td><td className={tdn}>{money(i.bonus, false)}</td><td className={tdn}>{money(i.advances, false)}</td><td className={tdn}>{money(i.deductions, false)}</td><td className={tdn + ' font-bold'}>{money(i.net_amount, false)}</td><td className={td + ' w-28'} /></tr>
+            ))}
+          </tbody>
+        </table>
+        <Totals rows={[['Total brut', money(d.total_gross)], ['Avances', money(d.total_advances)], ['Retenues', money(d.total_deductions)], ['Net total à payer', money(d.total_net), true]]} />
+        <p className="mt-2 text-[11px] text-slate-500">Paie de gestion interne — ne remplace pas les déclarations sociales et fiscales.</p>
+        {d.items.map((i: any) => (
+          <div key={'r' + i.id} className="mt-8 rounded border border-slate-400 p-4 text-sm" style={{ breakBefore: 'page', breakInside: 'avoid' }}>
+            <div className="flex items-start justify-between">
+              <img src="/logo-sm.png" alt="" className="h-10" />
+              <div className="text-end"><div className="text-lg font-bold text-[#0B2149]">REÇU DE SALAIRE</div><div>{d.number} · {period}</div></div>
+            </div>
+            <p className="mt-3">Employé : <b>{i.full_name}</b> {i.code && `(${i.code})`} {i.position && `— ${i.position}`} {i.cin && `— CIN ${i.cin}`}</p>
+            <table className="mt-2 w-full border-collapse">
+              <tbody>
+                <tr><td className={td}>Jours présents</td><td className={tdn}>{i.days_present}</td><td className={td}>Absences</td><td className={tdn}>{i.days_absent}</td></tr>
+                <tr><td className={td}>Salaire de la période</td><td className={tdn}>{money(i.base_amount)}</td><td className={td}>Heures supplémentaires</td><td className={tdn}>{money(i.overtime_amount)}</td></tr>
+                <tr><td className={td}>Prime</td><td className={tdn}>{money(i.bonus)}</td><td className={td}>Avances déduites</td><td className={tdn}>−{money(i.advances)}</td></tr>
+                <tr><td className={td}>Retenues</td><td className={tdn}>−{money(i.deductions)}</td><td className={td + ' font-bold'}>NET PAYÉ</td><td className={tdn + ' font-bold'}>{money(i.net_amount)}</td></tr>
+              </tbody>
+            </table>
+            <p className="mt-2">Arrêté à la somme de : <b>{amountInWords(Math.max(0, i.net_amount))}</b>.</p>
+            <div className="mt-6 grid grid-cols-2 gap-8"><div className="h-16 border-t border-slate-400 pt-1 text-xs text-slate-500">Signature de l'employeur</div><div className="h-16 border-t border-slate-400 pt-1 text-xs text-slate-500">Signature de l'employé (reçu)</div></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
   if (type === 'test-scanner') {
     const fmt: Record<string, string> = { 'EAN-13': 'EAN13', 'EAN-13 avec zéros initiaux': 'EAN13', 'EAN-8': 'EAN8', 'UPC-A': 'UPC', 'Code 128 (lettres et tiret)': 'CODE128' };
     return (

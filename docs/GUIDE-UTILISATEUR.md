@@ -31,6 +31,21 @@ Sans Internet, l'application affiche un bandeau rouge et **aucune vente ne peut 
 ## Contrôleur à distance (Moknine)
 **Vérification des factures** : factures du jour, en attente, vérifiées, anomalies, annulées, impayées. Ouvrir une facture pour la consulter, télécharger le PDF et commenter. Marquer « vérifiée » ou signaler une anomalie seulement si l'administrateur l'a autorisé.
 
+## Personnel, pointage et paie
+- **Personnel → Ajouter un employé** : nom, poste, mode de paie (à la journée, à la semaine ou au mois) et salaire.
+- **Pointage** (chaque jour) : un bouton par employé — Présent, ½ journée, Absent, Congé, Malade, Férié ; « Tous présents » pour aller vite ; heures d'arrivée/départ et heures supplémentaires facultatives. L'onglet **Récapitulatif du mois** affiche le tableau des présences (export Excel).
+- **Avance sur salaire** (icône 💰 dans la liste du personnel) : déduite automatiquement de la paie suivante.
+- **Paie → Nouvelle paie** : choisir « Par semaine » ou « Par mois » ; le calcul se fait à partir du pointage :
+  - à la journée : jours présents × salaire du jour ;
+  - à la semaine / au mois : salaire fixe moins les absences (salaire ÷ jours ouvrés, réglable dans Paramètres → Personnel) ;
+  - + heures supplémentaires + prime − avances − retenues.
+- **Valider** verrouille le pointage de la période, **Payer** enregistre la dépense « Salaires » (depuis la caisse si coché), **Imprimer** produit l'état de paie et un reçu de salaire à signer par employé.
+
+Paie de gestion interne : les cotisations CNSS / IRPP éventuelles se saisissent en « retenue » selon les indications du comptable.
+
+## Données d'exemple
+**Paramètres → Données d'exemple → Ajouter les exemples** : produits, clients, fournisseur, vente, devis, dépense, personnel et pointage pour découvrir le logiciel. **Supprimer tous les exemples** les retire en un clic sans toucher aux données réelles.
+
 ## Corrections
 Rien ne se supprime silencieusement :
 - une vente se corrige par **retour** (avoir partiel) ou **annulation** (avoir total, stock restitué, remboursement) ;

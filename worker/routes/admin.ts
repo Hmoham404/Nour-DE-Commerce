@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+﻿import { Hono } from 'hono';
 import { z } from 'zod';
 import {
   AppEnv, HttpError, all, first, run, tx, uuid, body, perm, need, auditStmt, clientIp, hashPassword, verifyPassword,
@@ -250,7 +250,7 @@ const SETTING_KEYS = [
   'company_name', 'company_activity', 'company_address', 'company_city', 'company_phone', 'company_email', 'company_tax_id', 'company_rc',
   'default_vat_bp', 'vat_rates_bp', 'fiscal_stamp', 'fiscal_stamp_enabled', 'allow_negative_stock', 'block_expired_sales', 'expiry_alert_days',
   'expiry_alert_levels', 'default_max_discount_bp', 'low_rotation_days', 'invoice_footer', 'ticket_footer', 'remote_validation_enabled', 'scanner_config',
-  'company_logo',
+  'company_logo', 'hr_days_per_week', 'hr_days_per_month', 'hr_paid_leave_statuses',
 ];
 
 settings.get('/', async (c) => {

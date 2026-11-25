@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+﻿import { useMemo, useState, type ReactNode } from 'react';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
 import { Empty, Spinner, cx } from './ui';
@@ -63,10 +63,10 @@ export function DataTable<T extends Record<string, any>>({ columns, rows, loadin
   const go = (p: number) => (server ? onPage!(p) : setCpage(p));
 
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-line/70 bg-surface shadow-[0_1px_3px_rgba(11,33,73,.06),0_8px_24px_-12px_rgba(11,33,73,.12)]">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-surface-2 text-xs uppercase tracking-wide text-muted">
+          <thead className="border-b border-line bg-navy/[.035] text-[11px] uppercase tracking-wider text-navy/70 dark:bg-white/5 dark:text-white/60">
             <tr>
               {columns.map((c) => (
                 <th
@@ -100,7 +100,7 @@ export function DataTable<T extends Record<string, any>>({ columns, rows, loadin
                 <tr
                   key={rowKey ? rowKey(row) : row.id ?? i}
                   onClick={() => onRowClick?.(row)}
-                  className={cx('border-t border-line', onRowClick && 'cursor-pointer hover:bg-surface-2', loading && 'opacity-60')}
+                  className={cx('border-t border-line/60 transition-colors even:bg-surface-2/50', onRowClick && 'cursor-pointer hover:bg-gold/[.07]', loading && 'opacity-60')}
                 >
                   {columns.map((c) => (
                     <td key={c.key} className={cx('px-3 py-2', c.align === 'end' ? 'num text-end' : c.align === 'center' ? 'text-center' : 'text-start', c.hideSm && 'hidden md:table-cell', c.className)}>

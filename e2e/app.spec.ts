@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+﻿import { test, expect, type Page } from '@playwright/test';
 
 // Prérequis : API + interface servies par `wrangler dev` (npm run build && npm run dev:api), admin admin@test.local / Test12345.
 const SHOTS = process.env.E2E_SHOTS ?? 'test-results/shots';
@@ -145,7 +145,7 @@ test.describe.serial('Nour de Commerce ERP', () => {
   test('pages principales sans erreur (menu complet)', async () => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    for (const p of ['/ventes', '/factures', '/produits', '/stock', '/stock/mouvements', '/inventaires', '/stock/lots', '/stock/alertes', '/fournisseurs', '/achats/commandes', '/achats/receptions', '/achats/factures', '/clients', '/creances', '/dettes', '/caisse', '/paiements', '/depenses', '/rentabilite', '/rapports', '/exports', '/documents', '/utilisateurs', '/roles', '/verification', '/audit', '/import', '/parametres', '/sauvegardes', '/devis', '/commandes', '/livraisons', '/retours', '/categories', '/codes-barres', '/profil']) {
+    for (const p of ['/ventes', '/factures', '/produits', '/stock', '/stock/mouvements', '/inventaires', '/stock/lots', '/stock/alertes', '/fournisseurs', '/achats/commandes', '/achats/receptions', '/achats/factures', '/clients', '/creances', '/dettes', '/caisse', '/paiements', '/depenses', '/rentabilite', '/rapports', '/exports', '/documents', '/utilisateurs', '/roles', '/verification', '/audit', '/import', '/parametres', '/sauvegardes', '/devis', '/commandes', '/livraisons', '/retours', '/categories', '/codes-barres', '/profil', '/personnel', '/pointage', '/paie']) {
       await page.goto(p);
       await expect(page.locator('main h1').first()).toBeVisible();
     }

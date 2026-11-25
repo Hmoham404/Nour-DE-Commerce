@@ -52,7 +52,8 @@ const AR: Record<string, string> = {
   'Ventes du jour': 'مبيعات اليوم', 'Argent encaissé aujourd’hui': 'المبالغ المقبوضة اليوم', 'Produits à commander': 'منتجات يجب طلبها',
   'Les 7 derniers jours': 'آخر 7 أيام', 'Tableau de bord complet': 'لوحة القيادة الكاملة', 'Vue simple': 'عرض مبسط', 'Actions rapides': 'إجراءات سريعة',
   'Nouvelle vente': 'بيع جديد', 'Ajouter un produit': 'إضافة منتج', 'Recevoir une livraison': 'استلام بضاعة', 'Clients qui doivent de l’argent': 'حرفاء عليهم ديون',
-  'Bonjour': 'مرحبا',
+  'Bonjour': 'مرحبا', Personnel: 'الأعوان', Effectif: 'قائمة الأعوان', Pointage: 'الحضور', Paie: 'الأجور', 'Pointage du jour': 'حضور اليوم',
+  'Récapitulatif du mois': 'ملخص الشهر', 'Nouvelle paie': 'خلاص جديد', 'Ajouter un employé': 'إضافة عون', 'Données d’exemple': 'بيانات تجريبية',
   // Statuts
   Payée: 'مدفوعة', Partielle: 'جزئية', Impayée: 'غير مدفوعة', Annulée: 'ملغاة', Validée: 'مؤكدة', 'En attente': 'في الانتظار', Vérifiée: 'تم التحقق',
   Anomalie: 'خلل', Brouillon: 'مسودة', Ouverte: 'مفتوحة', Clôturée: 'مغلقة',

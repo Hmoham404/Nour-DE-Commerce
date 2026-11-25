@@ -36,6 +36,10 @@ export const PERMISSIONS = {
   'settings.manage': 'Gérer les paramètres',
   'audit.view': "Consulter le journal d'audit",
   'backup.manage': 'Sauvegardes',
+  'hr.view': 'Consulter le personnel',
+  'hr.attendance': 'Saisir le pointage journalier',
+  'hr.manage': 'Gérer le personnel (fiches, salaires, avances)',
+  'payroll.manage': 'Calculer, valider et payer la paie',
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -45,7 +49,7 @@ export const DEFAULT_ROLES: Record<string, { label: string; permissions: Permiss
   admin: { label: 'Administrateur / Propriétaire', permissions: ALL_PERMISSIONS },
   magasinier: {
     label: 'Magasinier',
-    permissions: ['products.view', 'stock.view', 'stock.adjust', 'inventory.manage', 'receipts.manage', 'purchases.view', 'suppliers.view', 'returns.manage'],
+    permissions: ['products.view', 'stock.view', 'stock.adjust', 'inventory.manage', 'receipts.manage', 'purchases.view', 'suppliers.view', 'returns.manage', 'hr.attendance'],
   },
   caissier: {
     label: 'Caissier',

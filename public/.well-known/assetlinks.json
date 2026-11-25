@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "tn.nourdecommerce.erp",
+        "sha256_cert_fingerprints": ["40:5F:17:2D:33:05:BC:EE:44:BD:DC:70:2B:48:E7:4A:51:04:BB:4B:BB:71:0F:20:4A:5B:77:FE:27:80:0A:11"]
+      }
+    }]

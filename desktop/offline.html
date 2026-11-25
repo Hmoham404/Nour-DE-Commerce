@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self'" />
+    <title>Nour de Commerce — connexion</title>
+    <style>
+      body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', Tahoma, sans-serif;
+        background: radial-gradient(800px 400px at 100% 0%, rgba(217,166,56,.25), transparent 60%), linear-gradient(135deg, #071735, #0B2149 50%, #14306a); color: #0f1b33; }
+      .card { background: #fff; border-radius: 24px; padding: 36px 40px; max-width: 440px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,.35); border-top: 6px solid #D9A638; }
+      img { width: 240px; }
+      h1 { font-size: 20px; margin: 18px 0 6px; color: #0B2149; }
+      p { color: #64748b; line-height: 1.5; margin: 0 0 18px; }
+      button { background: linear-gradient(#e8bd5a, #D9A638); color: #0B2149; border: 0; border-radius: 12px; padding: 12px 26px; font-size: 15px; font-weight: 700; cursor: pointer; }
+      small { display: block; margin-top: 16px; color: #94a3b8; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img src="build/logo.png" alt="Nour de Commerce" />
+      <h1>Connexion Internet indisponible</h1>
+      <p>Le logiciel n'arrive pas à joindre le serveur. Vérifiez le câble réseau ou le Wi-Fi.<br />Aucune vente n'est enregistrée tant que la connexion n'est pas rétablie.</p>
+      <button id="retry">Réessayer</button>
+      <small>Nouvel essai automatique dans <span id="s">15</span> s · Developed by GM LAC</small>
+    </div>
+    <script>
+      const target = new URLSearchParams(location.search).get('target');
+      const go = () => (target ? (location.href = target) : window.ndcDesktop && window.ndcDesktop.retry());
+      document.getElementById('retry').onclick = go;
+      let n = 15;
+      setInterval(() => { n--; document.getElementById('s').textContent = n; if (n <= 0) go(); }, 1000);
+    </script>
+  </body>
+</html>
