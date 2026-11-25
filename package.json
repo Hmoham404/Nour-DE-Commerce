@@ -1,0 +1,45 @@
+{
+  "name": "nour-de-commerce-erp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nour de Commerce — ERP commercial (Cloudflare Workers + D1). Developed by GM LAC.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:api": "wrangler dev --port 8799 --local",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.worker.json",
+    "test": "vitest run",
+    "test:api": "node tests/integration.mjs http://127.0.0.1:8799",
+    "db:migrate:local": "wrangler d1 migrations apply nour-de-commerce-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply nour-de-commerce-db --remote",
+    "db:backup": "wrangler d1 export nour-de-commerce-db --remote --output backups/backup.sql",
+    "admin:create": "node scripts/create-admin.mjs",
+    "deploy": "vite build && wrangler deploy"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@zxing/browser": "^0.2.1",
+    "hono": "^4.13.22",
+    "jsbarcode": "^3.12.3",
+    "lucide-react": "^1.80.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.7",
+    "recharts": "^3.11.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261125.1",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/react": "^19.3.2",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.2",
+    "wrangler": "^4.168.0"
+  }
+}

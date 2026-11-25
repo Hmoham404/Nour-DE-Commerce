@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nour-de-commerce-erp",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nour-de-commerce-db",
+      "database_id": "a5f644b3-0df2-4819-a83f-283becda7c71",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "triggers": { "crons": ["0 * * * *"] },
+  "observability": { "enabled": true }
+}
