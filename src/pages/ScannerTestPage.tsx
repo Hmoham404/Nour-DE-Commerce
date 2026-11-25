@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Plug, ScanBarcode, Volume2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Plug, Printer, ScanBarcode, Volume2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { analyzeBarcode } from '../../shared/barcode';
@@ -7,6 +7,41 @@ import { DEFAULT_SCANNER_CONFIG, type ScannerConfig } from '../../shared/scanner
 import { BarcodeScanner } from '../components/scanner/BarcodeScanner';
 import { beepError, beepOk, getScannerConfig, getScanHistory, pushScanHistory, saveLocalScannerConfig, type ScanRecord } from '../components/scanner/scanner';
 import { Badge, Button, Card, Checkbox, Field, Input, PageHeader, Select, useToast } from '../components/ui';
+
+/** Codes de la feuille de test (doivent être relus à l'identique). */
+export const TEST_CODES = [
+  { code: '6191234567897', label: 'EAN-13' },
+  { code: '0012345678905', label: 'EAN-13 avec zéros initiaux' },
+  { code: '96385074', label: 'EAN-8' },
+  { code: '036000291452', label: 'UPC-A' },
+  { code: 'NOUR-TEST-123', label: 'Code 128 (lettres et tiret)' },
+];
+
+/** Interprétation en clair d'une lecture, pour le réglage sur place. */
+function Diagnostic({ r }: { r: ScanRecord }) {
+  const tips: { ok: boolean; text: string }[] = [];
+  const expected = TEST_CODES.find((x) => x.code === r.code);
+  if (expected) tips.push({ ok: true, text: `Code de la feuille de test reconnu à l'identique (${expected.label}).` });
+  if (r.source === 'hid' || r.source === 'input') {
+    if (r.terminator === 'Enter') tips.push({ ok: true, text: 'Fin de lecture : touche Entrée envoyée par le lecteur (réglage idéal).' });
+    if (r.terminator === 'Tab') tips.push({ ok: true, text: 'Fin de lecture : Tabulation. Fonctionne ; « Entrée » est conseillé (code « Add CR Suffix » du manuel Honeywell).' });
+    if (r.terminator === 'auto') tips.push({ ok: true, text: 'Le lecteur n’envoie pas de touche de fin : le logiciel valide automatiquement après une courte pause. Fonctionne ; « Add CR Suffix » est conseillé pour plus de rapidité.' });
+    if (r.source === 'input' && r.code.length >= 6) tips.push({ ok: false, text: `Saisie lente (${r.durationMs} ms) : s'il s'agit du lecteur, augmentez « Délai max entre caractères » ci-contre.` });
+  }
+  if (/^[0-9]+$/.test(r.code) && r.code.length >= 8) {
+    const info = analyzeBarcode(r.code);
+    if (info.checksumValid === false) tips.push({ ok: false, text: 'Clé de contrôle invalide : code mal imprimé ou caractères mal transmis (vérifier la disposition clavier du lecteur).' });
+  }
+  return (
+    <ul className="mt-3 space-y-1 text-sm">
+      {tips.map((t, i) => (
+        <li key={i} className={`flex items-start gap-2 ${t.ok ? 'text-green-800 dark:text-green-300' : 'text-amber-800 dark:text-amber-300'}`}>
+          {t.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0" /> : <AlertTriangle className="mt-0.5 size-4 shrink-0" />} {t.text}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 /** Page de test et de configuration du lecteur code-barres Honeywell. */
 export default function ScannerTestPage() {
@@ -96,23 +131,33 @@ export default function ScannerTestPage() {
                   <Badge>{new Date(last.at).toLocaleTimeString('fr-FR')}</Badge>
                 </div>
                 {lookup && <div className="mt-2 text-sm">{lookup.found ? <>Produit : <b>{lookup.product.name}</b> · stock {lookup.product.stock}</> : 'Ce code n’existe pas encore dans le catalogue.'}</div>}
+                <Diagnostic r={last} />
               </div>
+            )}
+            {!last && (
+              <p className="mt-3 rounded-lg bg-surface-2 p-3 text-sm">
+                Imprimez la <b>feuille de test</b> (bouton à droite) et scannez ses codes un par un : chaque lecture doit afficher « Lecture réussie » avec le bon numéro.
+              </p>
             )}
           </Card>
           <Card title="10 dernières lectures" padded={false}>
             <table className="w-full text-sm">
-              <thead className="bg-surface-2 text-xs text-muted"><tr><th className="px-3 py-2 text-start">Heure</th><th className="px-3 py-2 text-start">Code</th><th className="px-3 py-2 text-start">Format</th><th className="px-3 py-2 text-start">Source</th><th className="px-3 py-2 text-end">Durée</th></tr></thead>
+              <thead className="bg-surface-2 text-xs text-muted"><tr><th className="px-3 py-2 text-start">Heure</th><th className="px-3 py-2 text-start">Code</th><th className="px-3 py-2 text-start">Format</th><th className="px-3 py-2 text-start">Source</th><th className="px-3 py-2 text-start">Fin</th><th className="px-3 py-2 text-end">Durée</th></tr></thead>
               <tbody>
                 {history.map((h, i) => (
-                  <tr key={i} className="border-t border-line"><td className="px-3 py-1.5">{new Date(h.at).toLocaleTimeString('fr-FR')}</td><td className="num px-3 py-1.5">{h.code}</td><td className="px-3 py-1.5">{h.format}</td><td className="px-3 py-1.5">{h.source}</td><td className="num px-3 py-1.5 text-end">{h.durationMs} ms</td></tr>
+                  <tr key={i} className="border-t border-line"><td className="px-3 py-1.5">{new Date(h.at).toLocaleTimeString('fr-FR')}</td><td className="num px-3 py-1.5">{h.code}</td><td className="px-3 py-1.5">{h.format}</td><td className="px-3 py-1.5">{h.source}</td><td className="px-3 py-1.5">{h.terminator === 'auto' ? 'pause' : h.terminator ?? '—'}</td><td className="num px-3 py-1.5 text-end">{h.durationMs} ms</td></tr>
                 ))}
-                {!history.length && <tr><td colSpan={5} className="p-4 text-center text-muted">Aucune lecture pour l'instant.</td></tr>}
+                {!history.length && <tr><td colSpan={6} className="p-4 text-center text-muted">Aucune lecture pour l'instant.</td></tr>}
               </tbody>
             </table>
             <p className="p-3 text-xs text-muted">Test de vitesse : un lecteur USB HID transmet un EAN-13 en général en moins de 150 ms. Une durée élevée indique une saisie manuelle ou un délai inter-caractères trop long.</p>
           </Card>
         </div>
         <div className="space-y-4">
+          <Card title="Feuille de test">
+            <p className="mb-2 text-sm">Codes connus (EAN-13, EAN-13 avec zéro initial, EAN-8, UPC-A, Code 128) à imprimer et scanner pour valider le lecteur sur place.</p>
+            <Button icon={<Printer className="size-4" />} onClick={() => window.open('/imprimer/test-scanner/1', '_blank', 'noopener')}>Imprimer la feuille de test</Button>
+          </Card>
           <Card title="État">
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2"><ScanBarcode className="size-5 text-gold" /> Mode : <b>USB HID Keyboard</b></div>

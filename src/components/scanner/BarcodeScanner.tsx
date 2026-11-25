@@ -39,8 +39,12 @@ export function BarcodeScanner({
   placeholder,
   autoFocus = true,
   refocus = true,
+  keepFocus = true,
+  big = false,
   extra,
 }: {
+  keepFocus?: boolean;
+  big?: boolean;
   onScan: (code: string) => Promise<ScanResult> | ScanResult;
   onType?: (text: string) => void;
   enabled?: boolean;
@@ -82,7 +86,7 @@ export function BarcodeScanner({
   return (
     <div className="space-y-1.5">
       <div className="flex gap-2">
-        <BarcodeInput ref={inputRef} onSubmit={handle} onType={onType} placeholder={placeholder} className="flex-1" flash={flash} />
+        <BarcodeInput ref={inputRef} onSubmit={handle} onType={onType} placeholder={placeholder} className={big ? 'flex-1 [&_input]:h-14 [&_input]:text-lg' : 'flex-1'} flash={flash} keepFocus={keepFocus && enabled} />
         <Button variant="outline" className="h-12" onClick={() => setCamera(true)} title={t('Caméra')} icon={<Camera className="size-5" />}>
           <span className="hidden lg:inline">{t('Caméra')}</span>
         </Button>

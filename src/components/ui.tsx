@@ -241,7 +241,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: {
   if (!open) return null;
   const w = { sm: 'max-w-md', md: 'max-w-xl', lg: 'max-w-3xl', xl: 'max-w-5xl' }[size];
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div role="dialog" aria-modal="true" className="ndc-modal fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={cx('flex max-h-[95vh] w-full flex-col rounded-t-2xl bg-surface shadow-2xl sm:rounded-2xl', w)}>
         <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <h2 className="text-lg font-semibold">{title}</h2>

@@ -1,12 +1,13 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Banknote, Boxes, CalendarClock, FileCheck2, HandCoins, Package, PackageX, Receipt, ShoppingBag, TrendingUp, Truck, Wallet } from 'lucide-react';
+import { AlertTriangle, Banknote, Boxes, CalendarClock, FileCheck2, HandCoins, Package, PackageX, Receipt, ShoppingBag, ShoppingCart, TrendingUp, Truck, Wallet } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { useI18n } from '../lib/i18n';
 import { useFetch, usePeriod } from '../lib/hooks';
 import { money, pct, PAY_METHODS } from '../lib/format';
 import { qs } from '../lib/api';
 import { PeriodFilter } from '../components/common';
-import { ErrorBox, PageHeader, Spinner, Stat } from '../components/ui';
+import { Button, ErrorBox, PageHeader, Spinner, Stat } from '../components/ui';
 import { ChartCard, Donut, MoneyArea, MoneyBars, MoneyLine } from '../components/charts';
 import { formatMoney } from '../../shared/money';
 
@@ -14,6 +15,138 @@ const MONTHS_FR = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août
 const MONTHS_AR = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
 export default function Dashboard() {
+  const [full, setFull] = useState(() => localStorage.getItem('ndc-full-dashboard') === '1');
+  const toggle = () => {
+    localStorage.setItem('ndc-full-dashboard', full ? '0' : '1');
+    setFull(!full);
+  };
+  return full ? <FullDashboard onToggle={toggle} /> : <SimpleDashboard onToggle={toggle} />;
+}
+
+function BigTile({ label, value, sub, tone, icon, onClick }: { label: string; value: string | number; sub?: string; tone: string; icon: React.ReactNode; onClick?: () => void }) {
+  const { t } = useI18n();
+  return (
+    <button onClick={onClick} disabled={!onClick} className={`flex items-center gap-4 rounded-2xl p-5 text-start shadow-sm transition enabled:hover:scale-[1.01] ${tone}`}>
+      <div className="rounded-xl bg-white/20 p-3">{icon}</div>
+      <div className="min-w-0">
+        <div className="text-sm font-medium opacity-90">{t(label)}</div>
+        <div className="num truncate text-2xl font-extrabold sm:text-3xl">{value}</div>
+        {sub && <div className="text-xs opacity-80">{t(sub)}</div>}
+      </div>
+    </button>
+  );
+}
+
+/** Vue simple : l'essentiel de la journée, lisible en 5 secondes. */
+function SimpleDashboard({ onToggle }: { onToggle: () => void }) {
+  const { me, can } = useAuth();
+  const { t, lang } = useI18n();
+  const nav = useNavigate();
+  const today = new Date(Date.now() + 3600000).toISOString().slice(0, 10);
+  const week = new Date(Date.now() + 3600000 - 6 * 86400000).toISOString().slice(0, 10);
+  const { data, error, reload } = useFetch<any>(`/api/dashboard${qs({ from: week, to: today })}`);
+  const alerts = useFetch<any>(can('stock.view') ? '/api/stock/alerts' : null);
+  const debtors = useFetch<any>(can('customers.view') ? '/api/customers?debtors=1&sort=balance&pageSize=5' : null);
+  const days = Array.from({ length: 7 }, (_, i) => new Date(Date.now() + 3600000 - (6 - i) * 86400000).toISOString().slice(0, 10));
+  const byDay = new Map((data?.charts.daily ?? []).map((d: any) => [d.d, d.ttc]));
+  const dayName = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString(lang === 'ar' ? 'ar-TN' : 'fr-FR', { weekday: 'short', day: 'numeric' });
+  const toOrder = [...(alerts.data?.out ?? []), ...(alerts.data?.low ?? [])];
+
+  return (
+    <div>
+      <PageHeader
+        title={`${t('Bonjour')} ${me?.full_name?.split(' ')[0] ?? ''}`}
+        subtitle={new Date().toLocaleDateString(lang === 'ar' ? 'ar-TN' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        actions={<Button variant="outline" onClick={onToggle}>{t('Tableau de bord complet')}</Button>}
+      />
+      <ErrorBox error={error} onRetry={reload} />
+      {!data ? (
+        <Spinner />
+      ) : (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <BigTile label="Ventes du jour" value={money(data.today.revenue_ttc)} sub={`${data.today.sales_count} vente(s)`} tone="bg-navy text-white" icon={<ShoppingBag className="size-7" />} onClick={can('sales.view') ? () => nav('/ventes') : undefined} />
+            <BigTile label="Argent encaissé aujourd’hui" value={money(data.today.collections)} tone="bg-green-600 text-white" icon={<Banknote className="size-7" />} />
+            <BigTile label="Solde de caisse" value={money(data.snapshot.cash_balance)} sub="Caisses ouvertes" tone="bg-gold text-navy" icon={<Wallet className="size-7" />} onClick={can('cash.use', 'cash.manage') ? () => nav('/caisse') : undefined} />
+            <BigTile label="Produits à commander" value={data.snapshot.out_of_stock + data.snapshot.low_stock} sub={`${data.snapshot.out_of_stock} en rupture`} tone={data.snapshot.out_of_stock ? 'bg-red-600 text-white' : 'bg-surface text-fg border border-line'} icon={<PackageX className="size-7" />} onClick={can('stock.view') ? () => nav('/stock/alertes') : undefined} />
+          </div>
+
+          <div className="mt-4">
+            <h2 className="mb-2 text-sm font-semibold text-muted">{t('Actions rapides')}</h2>
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              {can('pos.use') && <QuickAction icon={<ShoppingCart className="size-6" />} label="Nouvelle vente" onClick={() => nav('/pos')} />}
+              {can('products.manage') && <QuickAction icon={<Package className="size-6" />} label="Ajouter un produit" onClick={() => nav('/produits/nouveau')} />}
+              {can('receipts.manage') && <QuickAction icon={<Truck className="size-6" />} label="Recevoir une livraison" onClick={() => nav('/achats/receptions/nouvelle')} />}
+              {can('invoices.view') && <QuickAction icon={<FileCheck2 className="size-6" />} label="Factures à vérifier" badge={data.snapshot.invoices_pending} onClick={() => nav('/verification')} />}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            <section className="rounded-xl border border-line bg-surface p-4 shadow-sm lg:col-span-1">
+              <h3 className="mb-3 text-sm font-semibold">{t('Les 7 derniers jours')}</h3>
+              <div className="space-y-1.5">
+                {(() => {
+                  const max = Math.max(1, ...days.map((d) => Number(byDay.get(d) ?? 0)));
+                  return days.map((d) => {
+                    const v = Number(byDay.get(d) ?? 0);
+                    return (
+                      <div key={d} className="grid grid-cols-[64px_1fr_92px] items-center gap-2 text-sm">
+                        <span className="text-muted">{dayName(d)}</span>
+                        <div className="h-5 rounded bg-surface-2"><div className="h-5 rounded bg-navy dark:bg-gold" style={{ width: `${(v / max) * 100}%` }} title={formatMoney(v)} /></div>
+                        <span className="num text-end">{money(v, false)}</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </section>
+            {can('stock.view') && (
+              <section className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="size-4 text-amber-500" /> {t('Produits à commander')}</h3>
+                {!toOrder.length && <p className="text-sm text-muted">Tout est en stock 👍</p>}
+                <ul className="divide-y divide-line">
+                  {toOrder.slice(0, 6).map((p: any) => (
+                    <li key={p.id} className="flex cursor-pointer justify-between py-1.5 text-sm hover:text-gold-600" onClick={() => nav(`/produits/${p.id}`)}>
+                      <span className="truncate">{p.name}</span>
+                      <span className={`num font-semibold ${p.stock <= 0 ? 'text-red-600' : 'text-amber-600'}`}>{p.stock}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+            {can('customers.view') && (
+              <section className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold"><HandCoins className="size-4 text-amber-500" /> {t('Clients qui doivent de l’argent')}</h3>
+                {!debtors.data?.rows?.length && <p className="text-sm text-muted">Aucune créance.</p>}
+                <ul className="divide-y divide-line">
+                  {debtors.data?.rows?.map((c: any) => (
+                    <li key={c.id} className="flex cursor-pointer justify-between py-1.5 text-sm hover:text-gold-600" onClick={() => nav(`/clients/${c.id}`)}>
+                      <span className="truncate">{c.name}</span>
+                      <span className="num font-semibold">{money(c.balance)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function QuickAction({ icon, label, onClick, badge }: { icon: React.ReactNode; label: string; onClick: () => void; badge?: number }) {
+  const { t } = useI18n();
+  return (
+    <button onClick={onClick} className="relative flex flex-col items-center gap-2 rounded-xl border border-line bg-surface p-4 text-sm font-semibold shadow-sm transition hover:border-gold">
+      <span className="text-navy dark:text-gold">{icon}</span>
+      {t(label)}
+      {!!badge && <span className="absolute end-2 top-2 rounded-full bg-red-600 px-2 text-xs text-white">{badge}</span>}
+    </button>
+  );
+}
+
+function FullDashboard({ onToggle }: { onToggle: () => void }) {
   const [period, setPeriod] = usePeriod('month');
   const { can } = useAuth();
   const { t, lang } = useI18n();
@@ -28,7 +161,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <PageHeader title="Tableau de bord" subtitle={t('Vue d’ensemble')} actions={<PeriodFilter value={period} onChange={setPeriod} />} />
+      <PageHeader title="Tableau de bord" subtitle={t('Vue d’ensemble')} actions={<><PeriodFilter value={period} onChange={setPeriod} /><Button variant="outline" onClick={onToggle}>{t('Vue simple')}</Button></>} />
       <ErrorBox error={error} onRetry={reload} />
       {!data && loading ? (
         <Spinner />

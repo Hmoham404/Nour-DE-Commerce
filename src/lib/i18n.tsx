@@ -48,6 +48,11 @@ const AR: Record<string, string> = {
   'HT net des retours': 'دون أداءات، صافي المرتجعات', HT: 'دون أداءات', 'Au coût moyen pondéré': 'بالتكلفة المتوسطة المرجحة', 'Caisses ouvertes': 'الصناديق المفتوحة',
   'Argent reçu des clients (période)': 'المبالغ المقبوضة من الحرفاء (الفترة)', 'Réceptions HT (période)': 'الاستلامات دون أداءات (الفترة)', 'Marge brute − dépenses': 'الهامش الإجمالي − المصاريف',
   'Valider la vente —': 'تأكيد البيع —', Tableau: 'جدول', Autres: 'أخرى', Aucun: 'لا شيء', 'Montant reçu': 'المبلغ المستلم', 'Timbre fiscal': 'الطابع الجبائي',
+  'Vendre (caisse)': 'البيع (الصندوق)', Stock: 'المخزون', 'Ma caisse': 'صندوقي', 'Afficher tout le menu': 'عرض القائمة الكاملة', 'Menu simplifié': 'قائمة مبسطة',
+  'Ventes du jour': 'مبيعات اليوم', 'Argent encaissé aujourd’hui': 'المبالغ المقبوضة اليوم', 'Produits à commander': 'منتجات يجب طلبها',
+  'Les 7 derniers jours': 'آخر 7 أيام', 'Tableau de bord complet': 'لوحة القيادة الكاملة', 'Vue simple': 'عرض مبسط', 'Actions rapides': 'إجراءات سريعة',
+  'Nouvelle vente': 'بيع جديد', 'Ajouter un produit': 'إضافة منتج', 'Recevoir une livraison': 'استلام بضاعة', 'Clients qui doivent de l’argent': 'حرفاء عليهم ديون',
+  'Bonjour': 'مرحبا',
   // Statuts
   Payée: 'مدفوعة', Partielle: 'جزئية', Impayée: 'غير مدفوعة', Annulée: 'ملغاة', Validée: 'مؤكدة', 'En attente': 'في الانتظار', Vérifiée: 'تم التحقق',
   Anomalie: 'خلل', Brouillon: 'مسودة', Ouverte: 'مفتوحة', Clôturée: 'مغلقة',

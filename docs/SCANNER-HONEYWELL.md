@@ -14,7 +14,8 @@ Le logiciel est compatible avec tous les lecteurs Honeywell fonctionnant en mode
 |---|---|---|
 | `6191234567897` + retour à la ligne | OK | Rien à faire |
 | `&é"'(-è_çà…` au lieu des chiffres | Lecteur en clavier US, Windows en AZERTY | Le logiciel corrige automatiquement. Pour corriger à la source : scanner dans le manuel Honeywell le code « Keyboard Country : France » |
-| Code affiché mais pas de retour à la ligne | Suffixe désactivé | Scanner le code « Add CR Suffix » du manuel, ou choisir « Aucun suffixe » dans *Configuration du scanner* |
+| Code affiché mais pas de retour à la ligne | Suffixe désactivé | Rien à faire : le logiciel valide automatiquement après une courte pause. Pour plus de rapidité, scanner « Add CR Suffix » dans le manuel |
+| Le curseur saute au champ suivant | Suffixe Tab | Rien à faire : le logiciel le reconnaît et garde le curseur dans le champ de scan |
 | Rien ne s'affiche | Câble RS232 ou mode USB série | Voir §4 |
 
 ## 2. Réglage dans le logiciel
@@ -50,6 +51,10 @@ Le scanner n'intercepte jamais les frappes dans les champs mot de passe, zones d
 - **Téléphone / tablette** : bouton **Caméra** sur tous les écrans de scan.
 
 ## 5. Protocole de test physique avant livraison
+
+Imprimer d'abord la **feuille de test** (Configuration du scanner → *Imprimer la feuille de test*) : 5 codes connus (EAN-13, EAN-13 avec zéros, EAN-8, UPC-A, Code 128). La page de test indique pour chaque lecture si le code est relu à l'identique et comment le lecteur termine la lecture (Entrée, Tab ou pause).
+
+Au point de vente, le curseur revient automatiquement dans le champ de scan après chaque clic : un scan n'est jamais perdu, et ne s'écrit jamais dans une quantité.
 
 À réaliser sur place, avec le vrai lecteur, et à cocher :
 

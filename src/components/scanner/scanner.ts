@@ -56,6 +56,8 @@ export interface ScanRecord {
   durationMs: number;
   source: 'hid' | 'input' | 'camera' | 'serial';
   format?: string;
+  /** fin de lecture détectée : Entrée, Tab ou pause (lecteur sans suffixe) */
+  terminator?: 'Enter' | 'Tab' | 'auto';
 }
 const history: ScanRecord[] = [];
 export function pushScanHistory(r: ScanRecord) {

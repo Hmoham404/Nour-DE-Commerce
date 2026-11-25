@@ -104,44 +104,74 @@ export const MENU: Group[] = [
   },
 ];
 
+/** Menu simplifié (par défaut) : seulement les écrans du quotidien. */
+export const SIMPLE_MENU: Item[] = [
+  { to: '/', label: 'Accueil', icon: Home, perm: ['dashboard.view'] },
+  { to: '/pos', label: 'Vendre (caisse)', icon: ShoppingCart, perm: ['pos.use'] },
+  { to: '/produits', label: 'Produits', icon: Package, perm: ['products.view'] },
+  { to: '/stock', label: 'Stock', icon: Boxes, perm: ['stock.view'] },
+  { to: '/achats/receptions', label: 'Réceptions', icon: PackageCheck, perm: ['receipts.manage', 'purchases.view'] },
+  { to: '/inventaires', label: 'Inventaires', icon: ClipboardCheck, perm: ['inventory.manage', 'inventory.validate'] },
+  { to: '/ventes', label: 'Ventes', icon: Receipt, perm: ['sales.view'] },
+  { to: '/clients', label: 'Clients', icon: Users, perm: ['customers.view'] },
+  { to: '/fournisseurs', label: 'Fournisseurs', icon: Building2, perm: ['suppliers.view'] },
+  { to: '/caisse', label: 'Ma caisse', icon: Wallet, perm: ['cash.use', 'cash.manage'] },
+  { to: '/depenses', label: 'Dépenses', icon: Banknote, perm: ['expenses.manage'] },
+  { to: '/verification', label: 'Vérification des factures', icon: ShieldCheck, perm: ['invoices.verify'] },
+  { to: '/rapports', label: 'Rapports', icon: BarChart3, perm: ['reports.view'] },
+  { to: '/parametres', label: 'Paramètres', icon: Settings, perm: ['settings.manage'] },
+];
+
+function NavItem({ i, collapsed, onNavigate, big }: { i: Item; collapsed: boolean; onNavigate?: () => void; big?: boolean }) {
+  const { t } = useI18n();
+  return (
+    <NavLink
+      to={i.to}
+      end={i.to === '/' || i.to === '/stock'}
+      onClick={onNavigate}
+      title={collapsed ? t(i.label) : undefined}
+      className={({ isActive }) =>
+        cx(
+          'mx-2 flex items-center gap-3 rounded-lg px-3 transition',
+          big ? 'py-2.5 text-[15px]' : 'py-2 text-sm',
+          isActive ? 'bg-gold font-semibold text-navy' : 'text-white/85 hover:bg-white/10',
+          collapsed && 'justify-center px-0',
+        )
+      }
+    >
+      <i.icon className={big ? 'size-5 shrink-0' : 'size-[18px] shrink-0'} />
+      {!collapsed && <span className="truncate">{t(i.label)}</span>}
+    </NavLink>
+  );
+}
+
 function Sidebar({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const { can } = useAuth();
   const { t } = useI18n();
+  const [full, setFull] = useState(() => localStorage.getItem('ndc-full-menu') === '1');
+  useEffect(() => localStorage.setItem('ndc-full-menu', full ? '1' : '0'), [full]);
   return (
     <nav className="flex h-full flex-col bg-navy text-white">
       <div className={cx('flex items-center justify-center bg-white', collapsed ? 'h-16 p-2' : 'h-20 px-4 py-3')}>
         {collapsed ? <img src="/icons/icon-192.png" alt="Nour de Commerce" className="size-10 rounded" /> : <img src="/logo-sm.png" alt="Nour de Commerce" className="max-h-14 w-auto" />}
       </div>
       <div className="flex-1 overflow-y-auto py-2">
-        {MENU.map((g) => {
+        {!full && SIMPLE_MENU.filter((i) => can(...i.perm)).map((i) => <NavItem key={i.to} i={i} collapsed={collapsed} onNavigate={onNavigate} big />)}
+        {full && MENU.map((g) => {
           const items = g.items.filter((i) => can(...i.perm));
           if (!items.length) return null;
           return (
             <div key={g.label} className="mb-1">
               {!collapsed && <div className="px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gold/90">{t(g.label)}</div>}
-              {items.map((i) => (
-                <NavLink
-                  key={i.to}
-                  to={i.to}
-                  end={i.to === '/' || i.to === '/stock'}
-                  onClick={onNavigate}
-                  title={collapsed ? t(i.label) : undefined}
-                  className={({ isActive }) =>
-                    cx(
-                      'mx-2 flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition',
-                      isActive ? 'bg-gold font-semibold text-navy' : 'text-white/85 hover:bg-white/10',
-                      collapsed && 'justify-center px-0',
-                    )
-                  }
-                >
-                  <i.icon className="size-[18px] shrink-0" />
-                  {!collapsed && <span className="truncate">{t(i.label)}</span>}
-                </NavLink>
-              ))}
+              {items.map((i) => <NavItem key={i.to} i={i} collapsed={collapsed} onNavigate={onNavigate} />)}
             </div>
           );
         })}
       </div>
+      <button onClick={() => setFull((f) => !f)} className="m-2 flex items-center justify-center gap-2 rounded-lg border border-white/20 px-3 py-2 text-xs text-white/80 hover:bg-white/10" title={t(full ? 'Menu simplifié' : 'Afficher tout le menu')}>
+        <Menu className="size-4" />
+        {!collapsed && t(full ? 'Menu simplifié' : 'Afficher tout le menu')}
+      </button>
     </nav>
   );
 }

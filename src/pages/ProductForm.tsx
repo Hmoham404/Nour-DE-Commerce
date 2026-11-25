@@ -47,6 +47,8 @@ export default function ProductForm() {
   const [scanMode, setScanMode] = useState(false);
   const [camera, setCamera] = useState(false);
   const [dup, setDup] = useState<any | null>(null);
+  const [advanced, setAdvanced] = useState(() => localStorage.getItem('ndc-product-advanced') === '1');
+  useEffect(() => localStorage.setItem('ndc-product-advanced', advanced ? '1' : '0'), [advanced]);
   const cats = useFetch<any[]>('/api/categories');
   const brands = useFetch<any[]>('/api/brands');
   const movements = useFetch<any>(!isNew && tab === 'historique' ? `/api/stock/movements?product_id=${id}&from=2000-01-01&to=2100-12-31&pageSize=100` : null, [tab]);
@@ -85,7 +87,8 @@ export default function ProductForm() {
     set('barcodes', [...p.barcodes, { barcode: code, packaging: 'piece', qty_per_unit: 1, is_primary: p.barcodes.length === 0 }]);
     setScanMode(false);
   };
-  useBarcodeScanner(addBarcode, scanMode);
+  // en vue simple, un scan n'importe où sur la page (hors champ de saisie) remplit le code-barres
+  useBarcodeScanner(addBarcode, scanMode || (!advanced && tab === 'fiche' && editable));
 
   const generate = async () => {
     const r = await api.post('/api/products/generate-barcode');
@@ -155,7 +158,73 @@ export default function ProductForm() {
       />
       {!isNew && <Tabs tabs={[['fiche', 'Fiche'], ['stock', 'Stock et lots'], ['historique', 'Mouvements et prix']]} value={tab} onChange={setTab} />}
       <ErrorBox error={error} />
-      {tab === 'fiche' && (
+      {tab === 'fiche' && !advanced && (
+        <Card className="mx-auto mt-3 max-w-2xl">
+          <div className="space-y-4">
+            <Field label="Nom du produit" required>
+              <Input className="h-12 text-lg" value={p.name} onChange={(e) => set('name', e.target.value)} disabled={!editable} autoFocus={isNew} placeholder="ex. Savon liquide 500 ml" />
+            </Field>
+            <div>
+              <span className="mb-1 block text-xs font-semibold text-muted">Code-barres</span>
+              {p.barcodes.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {p.barcodes.map((b: any, i: number) => (
+                    <span key={i} className="num inline-flex items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 py-1.5">
+                      {b.barcode}
+                      {b.packaging !== 'piece' && <Badge color="gold">{`${b.packaging} ×${b.qty_per_unit}`}</Badge>}
+                      {editable && <button className="text-red-600" onClick={() => set('barcodes', p.barcodes.filter((_: any, j: number) => j !== i))} aria-label="Retirer"><Trash2 className="size-4" /></button>}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {editable && (
+                <div className="flex gap-2">
+                  <BarcodeInput className="flex-1" onSubmit={addBarcode} placeholder={p.barcodes.length ? 'Scanner un autre code (carton, pack…)' : 'Cliquez ici puis scannez le produit avec le lecteur'} />
+                  <Button variant="outline" className="h-12" onClick={() => setCamera(true)}>Caméra</Button>
+                  <Button variant="outline" className="h-12" icon={<Wand2 className="size-4" />} onClick={generate} title="Le produit n'a pas de code-barres : en créer un">Créer</Button>
+                </div>
+              )}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Prix de vente (TTC)" required hint={`HT : ${money(p.sale_price)} · TVA ${pct(p.vat_bp)}`}>
+                <MoneyInput className="h-12 text-lg" value={priceTtc(p.sale_price, p.vat_bp)} onChange={(v) => set('sale_price', htFromTtc(v ?? 0, p.vat_bp))} disabled={!canPrices} />
+              </Field>
+              {(fin || isNew) && (
+                <Field label="Prix d'achat (HT)">
+                  <MoneyInput className="h-12 text-lg" value={p.purchase_price} onChange={(v) => set('purchase_price', v ?? 0)} disabled={!canPrices && !isNew} />
+                </Field>
+              )}
+              <Field label="Catégorie">
+                <Select className="h-12" value={p.category_id ?? ''} onChange={(e) => set('category_id', e.target.value || null)} disabled={!editable}>
+                  <option value="">—</option>
+                  {cats.data?.map((c) => <option key={c.id} value={c.id}>{c.parent_name ? `${c.parent_name} › ` : ''}{c.name}</option>)}
+                </Select>
+              </Field>
+              {isNew && can('stock.adjust') ? (
+                <Field label="Quantité en stock aujourd'hui">
+                  <Input className="h-12 text-lg" type="number" min={0} value={p.initial_stock} onChange={(e) => set('initial_stock', Number(e.target.value))} />
+                </Field>
+              ) : (
+                !isNew && <Field label="Stock actuel"><div className="num flex h-12 items-center text-lg font-bold">{totalStock} {p.unit}</div></Field>
+              )}
+              <Field label="Alerte si le stock descend sous">
+                <Input className="h-12" type="number" min={0} value={p.min_stock} onChange={(e) => set('min_stock', Number(e.target.value))} disabled={!editable} />
+              </Field>
+            </div>
+            {m && <p className="text-sm text-muted">Bénéfice par unité : <b className={m.margin >= 0 ? 'text-green-600' : 'text-red-600'}>{money(m.margin)}</b> ({pct(m.margin_bp)} du prix HT)</p>}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
+              <Button variant="ghost" onClick={() => setAdvanced(true)}>Options avancées (prix grossiste, TVA, lots, photo…) ▾</Button>
+              {editable && <Button size="lg" loading={busy} onClick={save}>Enregistrer</Button>}
+            </div>
+          </div>
+        </Card>
+      )}
+      {tab === 'fiche' && advanced && (
+        <div className="mt-2 flex justify-end">
+          <Button variant="ghost" size="sm" onClick={() => setAdvanced(false)}>▴ Vue simple</Button>
+        </div>
+      )}
+      {tab === 'fiche' && advanced && (
         <div className="mt-3 grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             <Card title="Identification">

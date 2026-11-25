@@ -17,7 +17,7 @@ export interface ScannerConfig {
 
 export const DEFAULT_SCANNER_CONFIG: ScannerConfig = {
   suffix: 'Enter',
-  maxInterval: 50,
+  maxInterval: 70,
   minLength: 4,
   dedupeMs: 250,
   idleTimeout: 120,

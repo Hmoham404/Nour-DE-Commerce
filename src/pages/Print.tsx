@@ -1,4 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import JsBarcode from 'jsbarcode';
+import { TEST_CODES } from './ScannerTestPage';
 import { useParams } from 'react-router-dom';
 import { Printer, X } from 'lucide-react';
 import { api } from '../lib/api';
@@ -28,6 +30,7 @@ export default function Print() {
         case 'releve-fournisseur': return api.get(`/api/suppliers/${id}/statement`);
         case 'caisse': return api.get(`/api/cash/sessions/${id}`);
         case 'inventaire': return api.get(`/api/inventories/${id}`);
+        case 'test-scanner': return { number: 'test' };
         default: throw new Error('Type de document inconnu');
       }
     };
@@ -144,7 +147,34 @@ function vatBreakdown(items: any[]) {
   return [...m.entries()].sort((a, b) => a[0] - b[0]);
 }
 
+function TestBarcode({ code, format }: { code: string; format: string }) {
+  const ref = useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    if (ref.current) JsBarcode(ref.current, code, { format, height: 70, width: 2.2, fontSize: 18, margin: 8 });
+  }, [code, format]);
+  return <svg ref={ref} />;
+}
+
 function Doc({ type, d, settings }: { type: string; d: any; settings: Record<string, string> }) {
+  if (type === 'test-scanner') {
+    const fmt: Record<string, string> = { 'EAN-13': 'EAN13', 'EAN-13 avec zéros initiaux': 'EAN13', 'EAN-8': 'EAN8', 'UPC-A': 'UPC', 'Code 128 (lettres et tiret)': 'CODE128' };
+    return (
+      <div>
+        <Header settings={settings} title="Feuille de test scanner" date={new Date().toLocaleDateString('fr-FR')} />
+        <p className="mt-4 text-sm">Ouvrez <b>Administration → Configuration du scanner</b>, cliquez dans le champ de test puis scannez chaque code. Le numéro affiché doit être <b>exactement</b> celui imprimé sous le code-barres.</p>
+        <div className="mt-6 grid grid-cols-2 gap-8">
+          {TEST_CODES.map((c) => (
+            <div key={c.code} className="rounded border border-slate-300 p-3 text-center" style={{ breakInside: 'avoid' }}>
+              <div className="mb-1 text-sm font-semibold">{c.label}</div>
+              <TestBarcode code={c.code} format={fmt[c.label]} />
+              <div className="mt-1 text-xs">☐ lu correctement</div>
+            </div>
+          ))}
+        </div>
+        <Footer settings={settings} sign={false} text="Feuille de test du lecteur code-barres" />
+      </div>
+    );
+  }
   // ───── Facture / BL / bon de sortie (depuis une vente)
   if (['facture', 'bl', 'bl-sans-prix', 'bon-sortie'].includes(type)) {
     const inv = d.invoice;
